@@ -1,61 +1,170 @@
-# Demo Devices Template
+# Yamaha MusicCast
 
-This is the user documentation of the integration. Gladys re-hosts this file
-and shows a permanent **Documentation** link to it in the Configuration screen
-(in the user's language, with English as the fallback) — it is when
-configuring that the user needs it most. Keep the short onboarding hints in
-the `section` blocks of the manifest `config_schema`; put the long
-step-by-step (screenshots, troubleshooting…) here.
+Control your Yamaha MusicCast devices from Gladys: AV receivers, soundbars, network speakers and
+streamers. Everything stays on your local network: the integration talks to each device through
+the official Yamaha Extended Control API, with no account and no cloud.
+
+> **Developed without the hardware: feedback welcome.** This integration was written from the
+> public Yamaha Extended Control specification and from the answers recorded by the open-source
+> projects that drive these devices, without a MusicCast device at hand. If something does not
+> behave as described, open an issue on the
+> [GitHub repository](https://github.com/guim31/gladys-musiccast/issues) with your model.
+
+This integration is not affiliated with Yamaha Corporation. MusicCast is a trademark of Yamaha
+Corporation.
 
 ## What you get
 
-Six demo devices show up after installation: a weather station (real data
-from Open-Meteo), a switch, a dimmable light, a smart plug with power
-metering, a motion sensor and a camera.
+- **One Gladys device per zone**: the main zone, and zone 2, zone 3 or zone 4 of the receivers
+  that have them, each powered, turned up and switched independently.
+- **Power, volume and mute** of each zone. The volume is shown in percent of the zone's range,
+  the scale of the Gladys music widget.
+- **Input**: a list of the inputs of the zone (HDMI, tuner, Spotify, Net Radio, AirPlay...), with
+  the names you gave them on the device.
+- **Sound mode** (sound program, DSP) on the zones that have it.
+- **Playback** of the network sources: play, pause, previous, next, playback state, and the
+  title, artist and album being played.
+- **Presets** (favorites): a list of the presets stored on the device, to recall one.
+- A **dashboard widget** per zone, a **scene trigger** "a track starts" and two **scene
+  actions**: recall a preset, choose an input.
+
+## Requirements
+
+- Gladys 5.1.0 or later.
+- A Yamaha device with MusicCast (it appears in the MusicCast app), on the same local network as
+  Gladys.
+- To control a device in standby, enable **Network Standby** on it (the "Network" settings of
+  the device or of the MusicCast app). Without it, a device in standby stops answering.
+- A fixed IP address for each device (a DHCP reservation in your router) is recommended. The
+  integration finds a device again after an address change, but up to 10 minutes later.
 
 ## Configuration
 
-1. Open the **Configuration** tab of the integration.
-2. Set the **latitude** and **longitude** the demo weather station should
-   observe (they default to Paris), and pick your temperature unit.
-   The **refresh interval** sets how often the weather station and the
-   plug's power are read: every 5 minutes by default, every minute at most.
-3. Save: the devices appear in the **Discovery** tab, ready to be added.
+### Settings
 
-The **Prefer the local connection** toggle drives the demo plug: it reports
-the channel it actually uses as a badge (local or cloud), with an orange dot
-when it runs degraded (local refused, cloud fallback).
+| Field                         | What it does                                                                                                                          |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| IP addresses (optional)       | Addresses of the devices the network search does not find, separated by commas.                                                       |
+| Refresh while on              | How often a device is read while one of its zones is on: 5, 10, 15 or 30 seconds. In standby, or when it does not answer, 30 seconds. |
+| Language of the feature names | Names given to the features of the zones added afterwards, and language of the scene action messages.                                 |
 
-## Actions
+### Finding the devices
 
-- **Test the weather provider** — performs a live request to Open-Meteo and
-  shows the current temperature and humidity under the button.
-- **Identify a device** — pick one of your devices in the list and it will
-  signal itself (the demo light "blinks" in the logs).
+At startup, and each time you click **Scan** in the Discovery tab, Gladys searches the network for
+UPnP media renderers (SSDP) on behalf of the integration; the integration keeps the ones that
+declare the Yamaha Extended Control API. The **Search for MusicCast devices** button of the
+configuration page does the same and tells you what it found, which addresses did not answer, and
+which typed addresses are not valid.
 
-## Scenes
+If a device is not found (a network that blocks multicast, another subnet), type its IP address
+in the configuration.
 
-The integration adds its own cards to the scene editor (Gladys 5.1 or
-later), under the **Integrations** category:
+### Adding the zones
 
-- **Motion detected** (trigger) — starts the scene when a demo motion sensor
-  sees something move. Optionally pick the sensor and what moved (person,
-  animal); left empty, any detection matches. The following actions can
-  read what moved with `{{triggerEvent.data.target}}`.
-- **Identify a device** (action) — makes the chosen device signal itself.
-  It returns whether the device could signal itself, so the following
-  actions can depend on it.
+Each zone appears in the **Discovery** tab, named after the device ("Living room") and the zone
+("Living room Zone2"). Click **Add to Gladys** on the ones you want. Only the zones added to Gladys
+are read regularly.
 
-## Dashboard
+## Devices
 
-Add the **Demo status** widget to a dashboard: it shows the live
-temperature of the weather station and the power of the office plug, the
-connection the plug currently uses (orange when degraded) and the observed
-location. Its **Identify the light** button makes the demo light signal
-itself.
+### Features of a zone
+
+| Feature              | Type in Gladys         | Notes                                                                                     |
+| -------------------- | ---------------------- | ----------------------------------------------------------------------------------------- |
+| Power                | On/off switch          | On / standby.                                                                             |
+| Volume               | Music volume (0-100 %) | Percent of the zone's range (0 to 161 steps on a receiver, 0 to 60 on a speaker...).      |
+| Mute                 | On/off switch          |                                                                                           |
+| Input                | Selection              | The inputs of the zone, with the names given on the device.                               |
+| Sound mode           | Selection              | Only on the zones with sound programs (receivers, soundbars).                             |
+| Preset               | Selection              | Recalls a stored preset; shows the last one recalled from Gladys until the input changes. |
+| Play, Pause          | Music buttons          | Network sources only. Pause stops a live radio.                                           |
+| Previous, Next       | Music buttons          | Network sources only.                                                                     |
+| Playback state       | Music playback state   | Playing / not playing.                                                                    |
+| Title, Artist, Album | Text                   | What a network source plays; "—" otherwise.                                               |
+
+The playback features exist only on devices with a network module, which all the zones of a
+device share: on a zone listening to another input (HDMI, tuner...), the playback buttons are
+refused so that they do not pause the music of another zone.
+
+The zones also work with the **Music** box of the Gladys dashboard (play, pause, previous, next
+and volume).
+
+### Refresh
+
+The device could push its changes, but only to a port of the integration container, which Gladys
+does not expose to the network. The integration therefore reads each device itself, without
+relying on the polling of Gladys: every 5 seconds by default while a zone is on, every 30 seconds
+in standby. A read is one request per added zone, plus one for what is playing when a zone
+listens to a network source. Yamaha publishes no request quota for this local API; the official
+MusicCast app reads the devices at a similar pace. The presets are read again every 5 minutes.
+
+Only the values that changed are sent to Gladys, plus a reminder every 6 hours so that a stable
+value never shows as outdated.
+
+## Dashboard widget
+
+The **MusicCast** widget shows one zone (to choose in its settings):
+
+- what is playing (title, artist, album) on a network source;
+- the volume, live;
+- power, input and sound mode, and "muted" when the sound is cut;
+- up to four buttons: power on / standby, play or pause, next track, mute.
+
+## Scene trigger
+
+**MusicCast: a track starts** fires when playback starts, or when the track changes, on a network
+source (Spotify, Net Radio, AirPlay, server...). You can limit it to one zone. The scene receives
+the title, the artist, the album and the input name as variables. It does not fire for what was
+already playing when the integration started.
+
+## Scene actions
+
+- **Recall a MusicCast preset**: plays preset number N (1 to 40) on a zone, as the preset buttons
+  of the remote do. The zone turns on. Output: the name of the preset.
+- **Choose a MusicCast input**: switches a zone to an input, given by its id (`hdmi1`, `tuner`,
+  `spotify`, `net_radio`, `airplay`...) or by the name shown on the device ("Apple TV"). The zone
+  turns on first. Output: the name of the input. An unknown input fails with the list of the
+  zone's inputs.
+
+To turn a zone off or set its volume in a scene, use the usual **Set device value** action on its
+Power and Volume features.
+
+## Scene examples
+
+- **Wake-up radio**: at 7:00 on weekdays, recall preset 1 (your morning radio) on the bedroom
+  speaker, then set its volume to 20 %.
+- **Movie night**: when the TV turns on, choose the input `hdmi1` on the living room receiver and
+  set the "Sound mode" to a cinema program.
+- **Leaving home**: when the last person leaves, put every zone in standby.
+- **Now playing**: when a track starts in the kitchen, send yourself
+  "{{triggerEvent.data.title}} — {{triggerEvent.data.artist}}".
 
 ## Troubleshooting
 
-The integration logs everything it does: check the integration logs from the
-Gladys UI (or `docker logs` on the host) with `LOG_LEVEL=debug` for the full
-detail.
+- **No device in the Discovery tab**: click **Search for MusicCast devices** in the configuration.
+  If nothing is found, type the IP address of the device (shown in the MusicCast app, Settings →
+  device → Network). Check that `http://<address>/YamahaExtendedControl/v1/system/getDeviceInfo`
+  opens in a browser of your network: it must show `"response_code":0`.
+- **The zone shows "unreachable"**: the device is unplugged, off the network, or in standby
+  without Network Standby. The integration tries again every 30 seconds and searches the network
+  again every 10 minutes (a new DHCP address).
+- **A command is refused**: some commands are guarded while the zone is in standby (the volume,
+  for example), and some models refuse functions they do not have. Turn the zone on first.
+- **Play, pause or next do nothing on a zone**: these buttons act on the network sources only.
+  Choose a network input first.
+- **Logs**: the integration only writes the start, the devices found, the devices lost and back,
+  and one line per command. Set the `LOG_LEVEL=debug` environment variable to see every read.
+
+## Limits
+
+- **Multiroom (MusicCast Link)** is out of scope: creating or leaving groups is done in the
+  MusicCast app. A zone that follows a group shows the "MusicCast Link" input.
+- The tuner (FM/DAB) is not controlled beyond selecting it as an input or recalling a preset; its
+  station is not shown as a title.
+- The device does not tell which preset is playing: the Preset list shows the last one recalled
+  from Gladys.
+- Changes are seen at the next read (5 seconds by default), not instantly.
+- The feature names are fixed when a zone is added to Gladys; changing the language later only
+  applies to the zones added afterwards.
+- Developed without the hardware: the answers were taken from the Yamaha specification and from
+  open-source projects. Your feedback helps.

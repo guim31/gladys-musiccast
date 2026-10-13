@@ -1,0 +1,35 @@
+{
+  "response_code": 0,
+  "network_name": "Salon",
+  "connection": "wired_lan",
+  "dhcp": true,
+  "ip_address": "192.0.2.40",
+  "subnet_mask": "255.255.255.0",
+  "default_gateway": "192.0.2.1",
+  "dns_server_1": "192.0.2.1",
+  "dns_server_2": "0.0.0.0",
+  "wireless_lan": {
+    "ssid": "",
+    "type": "wpa2-psk(aes)",
+    "key": "",
+    "ch": 0,
+    "strength": 0
+  },
+  "wireless_direct": {
+    "type": "none",
+    "key": ""
+  },
+  "musiccast_network": {
+    "ready": true,
+    "device_type": "root",
+    "child_num": 0,
+    "ch": 11,
+    "initial_join_running": false
+  },
+  "mac_address": {
+    "wired_lan": "02A0DE000001",
+    "wireless_lan": "02A0DE000002",
+    "wireless_direct": "02A0DE000003"
+  },
+  "vtuner_id": "000000000000"
+}

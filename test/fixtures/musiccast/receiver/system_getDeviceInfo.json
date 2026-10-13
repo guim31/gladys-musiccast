@@ -1,0 +1,18 @@
+{
+  "response_code": 0,
+  "model_name": "RX-V6A",
+  "destination": "BG",
+  "device_id": "02A0DE000001",
+  "system_id": "0B000001",
+  "system_version": 1.8,
+  "api_version": 2.11,
+  "netmodule_generation": 1,
+  "netmodule_version": "1931    ",
+  "netmodule_checksum": "00000000",
+  "serial_number": "Y000000A",
+  "category_code": 1,
+  "operation_mode": "normal",
+  "update_error_code": "00000000",
+  "net_module_num": 1,
+  "update_data_type": 0
+}

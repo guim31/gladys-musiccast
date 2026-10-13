@@ -1,0 +1,173 @@
+{
+  "response_code": 0,
+  "zone_list": [
+    {
+      "id": "main",
+      "text": "Main"
+    },
+    {
+      "id": "zone2",
+      "text": "Cuisine"
+    }
+  ],
+  "input_list": [
+    {
+      "id": "main_sync",
+      "text": "Main Zone Sync"
+    },
+    {
+      "id": "tuner",
+      "text": "Tuner"
+    },
+    {
+      "id": "hdmi1",
+      "text": "Apple TV"
+    },
+    {
+      "id": "hdmi2",
+      "text": "Console"
+    },
+    {
+      "id": "hdmi3",
+      "text": "HDMI3"
+    },
+    {
+      "id": "hdmi4",
+      "text": "HDMI4"
+    },
+    {
+      "id": "av1",
+      "text": "AV1"
+    },
+    {
+      "id": "audio1",
+      "text": "CD"
+    },
+    {
+      "id": "audio2",
+      "text": "AUDIO2"
+    },
+    {
+      "id": "audio3",
+      "text": "AUDIO3"
+    },
+    {
+      "id": "phono",
+      "text": "Phono"
+    },
+    {
+      "id": "bluetooth",
+      "text": "Bluetooth"
+    },
+    {
+      "id": "usb",
+      "text": "USB"
+    },
+    {
+      "id": "net_radio",
+      "text": "Net Radio"
+    },
+    {
+      "id": "server",
+      "text": "Server"
+    },
+    {
+      "id": "spotify",
+      "text": "Spotify"
+    },
+    {
+      "id": "airplay",
+      "text": "AirPlay"
+    },
+    {
+      "id": "deezer",
+      "text": "Deezer"
+    },
+    {
+      "id": "mc_link",
+      "text": "MC Link"
+    }
+  ],
+  "sound_program_list": [
+    {
+      "id": "munich",
+      "text": "Hall in Munich"
+    },
+    {
+      "id": "vienna",
+      "text": "Hall in Vienna"
+    },
+    {
+      "id": "chamber",
+      "text": "Chamber"
+    },
+    {
+      "id": "cellar_club",
+      "text": "Cellar Club"
+    },
+    {
+      "id": "roxy_theatre",
+      "text": "The Roxy Theatre"
+    },
+    {
+      "id": "bottom_line",
+      "text": "The Bottom Line"
+    },
+    {
+      "id": "sports",
+      "text": "Sports"
+    },
+    {
+      "id": "action_game",
+      "text": "Action Game"
+    },
+    {
+      "id": "roleplaying_game",
+      "text": "Roleplaying Game"
+    },
+    {
+      "id": "music_video",
+      "text": "Music Video"
+    },
+    {
+      "id": "standard",
+      "text": "Standard"
+    },
+    {
+      "id": "spectacle",
+      "text": "Spectacle"
+    },
+    {
+      "id": "sci-fi",
+      "text": "Sci-Fi"
+    },
+    {
+      "id": "adventure",
+      "text": "Adventure"
+    },
+    {
+      "id": "drama",
+      "text": "Drama"
+    },
+    {
+      "id": "mono_movie",
+      "text": "Mono Movie"
+    },
+    {
+      "id": "2ch_stereo",
+      "text": "2ch Stereo"
+    },
+    {
+      "id": "all_ch_stereo",
+      "text": "All-Ch Stereo"
+    },
+    {
+      "id": "surr_decoder",
+      "text": "Surround Decoder"
+    },
+    {
+      "id": "straight",
+      "text": "Straight"
+    }
+  ]
+}

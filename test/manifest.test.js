@@ -7,15 +7,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { DEVICE_BLUEPRINTS, SCENE_TRIGGER_KEYS } from '../src/devices/index.js';
+import { SCENE_TRIGGER } from '../src/hub.js';
 import { SCENE_ACTIONS } from '../src/scenes.js';
 import { WIDGETS } from '../src/widgets.js';
 import { DEFAULT_CONFIG } from '../src/config.js';
+import { SSDP_SEARCH_TARGET } from '../src/discovery.js';
 
 const manifest = JSON.parse(
   await readFile(new URL('../gladys-assistant-integration.json', import.meta.url), 'utf8'),
 );
 const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+const appSource = await readFile(new URL('../src/app.js', import.meta.url), 'utf8');
 
 // Every list of form fields the manifest can declare (same field grammar).
 const allFields = [
@@ -29,8 +31,8 @@ const allFields = [
   ...(manifest.widgets ?? []).flatMap((widget) => widget.settings ?? []),
 ];
 
-// Actions registered outside the blueprints (see index.js).
-const REGISTRY_LEVEL_ACTIONS = ['identify'];
+// The scene triggers the code fires (src/hub.js).
+const SCENE_TRIGGER_KEYS = [SCENE_TRIGGER];
 
 // Manifest fields older Gladys releases reject as unknown, with the first
 // release accepting them. The store validator refuses a manifest whose
@@ -58,12 +60,11 @@ function isAtLeast(version, required) {
 }
 
 test('every manifest action has a registered handler', () => {
-  const handled = new Set([
-    ...DEVICE_BLUEPRINTS.flatMap((bp) => Object.keys(bp.actions ?? {})),
-    ...REGISTRY_LEVEL_ACTIONS,
-  ]);
   for (const action of manifest.actions ?? []) {
-    assert.ok(handled.has(action.key), `manifest action "${action.key}" has no handler`);
+    assert.ok(
+      appSource.includes(`'${action.key}'`),
+      `manifest action "${action.key}" has no handler in src/app.js`,
+    );
   }
 });
 
@@ -82,7 +83,7 @@ test('declaring catalog categories requires Gladys >= 4.86.0', () => {
 
 test('declaring scene triggers, scene actions or widgets requires Gladys >= 5.1.0', () => {
   const declared = CAPABILITY_FIELDS.filter((field) => manifest[field] !== undefined);
-  assert.ok(declared.length > 0, 'the template demonstrates the capability fields');
+  assert.ok(declared.length > 0, 'the integration declares widgets, scene triggers and actions');
   assert.ok(
     isAtLeast(minGladysVersion(), CAPABILITY_MIN_GLADYS_VERSION),
     `${declared.join(', ')} requires gladys_version >= 5.1.0, got "${manifest.gladys_version}"`,
@@ -135,7 +136,7 @@ test('config_schema defaults stay consistent with DEFAULT_CONFIG', () => {
 
 test('section fields are purely presentational', () => {
   const sections = manifest.config_schema.filter((f) => f.type === 'section');
-  assert.ok(sections.length > 0, 'the template demonstrates at least one section block');
+  assert.ok(sections.length > 0, 'the form carries an onboarding section');
   for (const section of sections) {
     // A section stores NO value: declaring `required`, `default` or
     // `placeholder` on it rejects the manifest, and its key must never leak
@@ -160,7 +161,7 @@ test('section fields are purely presentational', () => {
 
 test('dynamic selects declare a source and no static options', () => {
   const dynamicSelects = allFields.filter((f) => f.source !== undefined);
-  assert.ok(dynamicSelects.length > 0, 'the template demonstrates a dynamic select');
+  assert.ok(dynamicSelects.length > 0, 'the zone fields pick among the devices');
   for (const field of dynamicSelects) {
     assert.equal(field.source, 'devices', 'the only core-defined source in V1 is "devices"');
     assert.equal(
@@ -196,9 +197,54 @@ test('the catalog description holds 10 to 100 characters per language', () => {
 test('field placeholders are multi-language objects', () => {
   // Like `label` and `description`: a plain string rejects the manifest.
   const withPlaceholder = allFields.filter((f) => f.placeholder !== undefined);
-  assert.ok(withPlaceholder.length > 0, 'the template demonstrates a placeholder');
+  assert.ok(withPlaceholder.length > 0, 'the free fields show an example');
   for (const field of withPlaceholder) {
     assert.equal(typeof field.placeholder, 'object', `field "${field.key}": placeholder`);
     assert.ok(field.placeholder.en, `field "${field.key}": placeholder needs an English text`);
+  }
+});
+
+test('the identity of the integration', () => {
+  assert.equal(manifest.name, 'Yamaha MusicCast');
+  assert.ok(manifest.name.length >= 3 && manifest.name.length <= 30);
+  assert.deepEqual(manifest.categories, ['multimedia']);
+  assert.deepEqual(manifest.transports, ['local']);
+  assert.equal(manifest.docker_image, `ghcr.io/guim31/gladys-musiccast:${manifest.version}`);
+  assert.equal(pkg.name, 'gladys-musiccast');
+  assert.equal(pkg.license, 'Apache-2.0');
+});
+
+test('the SSDP capture searches the MediaRenderer devices the code expects', () => {
+  // Only the first ssdp entry is scanned by the core (one `st` per scan).
+  const ssdp = manifest.network_discovery.filter((entry) => entry.type === 'ssdp');
+  assert.equal(ssdp.length, 1);
+  assert.equal(ssdp[0].st, SSDP_SEARCH_TARGET);
+});
+
+test('scene actions do not count on defaults, and a number field has integer bounds', () => {
+  // The core applies no `default` to an action field (GladysAssistant/Gladys#3155),
+  // and renders a number field without `step` (integers only).
+  for (const field of allFields) {
+    if (field.type === 'number') {
+      for (const bound of ['min', 'max', 'default']) {
+        if (field[bound] !== undefined) {
+          assert.ok(Number.isInteger(field[bound]), `${field.key}.${bound} must be an integer`);
+        }
+      }
+    }
+  }
+  for (const action of [...(manifest.actions ?? []), ...(manifest.scene_actions ?? [])]) {
+    for (const field of action.fields ?? []) {
+      assert.equal(field.default, undefined, `${action.key}.${field.key}: no default`);
+      assert.notEqual(field.type, 'secret', `${action.key}.${field.key}: no secret`);
+    }
+  }
+});
+
+test('every select of the configuration has its default among its options', () => {
+  // The core refuses (422) a stored select value outside its options.
+  for (const field of manifest.config_schema.filter((f) => f.type === 'select')) {
+    const values = field.options.map((option) => option.value);
+    assert.ok(values.includes(field.default), `${field.key}: default not among the options`);
   }
 });

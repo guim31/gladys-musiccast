@@ -30,6 +30,24 @@ Gladys before reporting a problem.
 
 In scope: the code of this repository and the Docker image it publishes.
 
+What the integration handles:
+
+- **Stored in `/data`**: nothing. The configuration (optional IP addresses,
+  refresh interval, language) is kept by Gladys; the devices found are kept in
+  memory and rebuilt at each start.
+- **Secrets**: none. The Yamaha Extended Control API has no authentication on
+  the local network, and the integration asks for no account, password or
+  token.
+- **Network**: from its container, HTTP GET requests on port 80 of the
+  MusicCast devices (`/YamahaExtendedControl/v1/...`), only towards the
+  addresses the user typed or the devices found by the network search; HTTP
+  GET of the UPnP description of a device found by the search, only when the
+  device serves it from its own address. The SSDP search is sent by the Gladys
+  core on the integration's behalf (manifest `network_discovery`), with the
+  core's own limits. Nothing leaves the local network unless the user types an
+  outside address.
+
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
-and the third-party services and devices the integration talks to.
+and the MusicCast devices themselves (their firmware, and the fact that any
+client on the local network can drive them).

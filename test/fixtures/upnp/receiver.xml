@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0" xmlns:yamaha="urn:schemas-yamaha-com:device-1-0">
+  <specVersion>
+    <major>1</major>
+    <minor>0</minor>
+  </specVersion>
+  <device>
+    <dlna:X_DLNADOC xmlns:dlna="urn:schemas-dlna-org:device-1-0">DMR-1.50</dlna:X_DLNADOC>
+    <deviceType>urn:schemas-upnp-org:device:MediaRenderer:1</deviceType>
+    <friendlyName>Salon</friendlyName>
+    <manufacturer>Yamaha Corporation</manufacturer>
+    <manufacturerURL>http://www.yamaha.com/</manufacturerURL>
+    <modelDescription>AV Receiver</modelDescription>
+    <modelName>RX-V6A</modelName>
+    <modelNumber>V6A</modelNumber>
+    <modelURL>http://www.yamaha.com/</modelURL>
+    <serialNumber>02A0DE000001</serialNumber>
+    <UDN>uuid:9ab0c000-f668-11de-9976-02a0de000001</UDN>
+    <serviceList>
+      <service>
+        <serviceType>urn:schemas-upnp-org:service:AVTransport:1</serviceType>
+        <serviceId>urn:upnp-org:serviceId:AVTransport</serviceId>
+        <SCPDURL>/AVTransport/desc.xml</SCPDURL>
+        <controlURL>/AVTransport/ctrl</controlURL>
+        <eventSubURL>/AVTransport/event</eventSubURL>
+      </service>
+      <service>
+        <serviceType>urn:schemas-upnp-org:service:RenderingControl:1</serviceType>
+        <serviceId>urn:upnp-org:serviceId:RenderingControl</serviceId>
+        <SCPDURL>/RenderingControl/desc.xml</SCPDURL>
+        <controlURL>/RenderingControl/ctrl</controlURL>
+        <eventSubURL>/RenderingControl/event</eventSubURL>
+      </service>
+    </serviceList>
+  </device>
+  <yamaha:X_device>
+    <yamaha:X_URLBase>http://192.0.2.40:80/</yamaha:X_URLBase>
+    <yamaha:X_serviceList>
+      <yamaha:X_service>
+        <yamaha:X_specType>urn:schemas-yamaha-com:service:X_YamahaRemoteControl:1</yamaha:X_specType>
+        <yamaha:X_controlURL>/YamahaRemoteControl/ctrl</yamaha:X_controlURL>
+        <yamaha:X_unitDescURL>/YamahaRemoteControl/desc.xml</yamaha:X_unitDescURL>
+      </yamaha:X_service>
+      <yamaha:X_service>
+        <yamaha:X_specType>urn:schemas-yamaha-com:service:X_YamahaExtendedControl:1</yamaha:X_specType>
+        <yamaha:X_yxcControlURL>/YamahaExtendedControl/v1/</yamaha:X_yxcControlURL>
+        <yamaha:X_yxcVersion>2110</yamaha:X_yxcVersion>
+      </yamaha:X_service>
+    </yamaha:X_serviceList>
+  </yamaha:X_device>
+</root>

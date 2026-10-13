@@ -32,15 +32,21 @@ pushing.
 
 ```
 index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
+src/app.js                        registers every handler on the hub (tests drive the same wiring)
+src/hub.js                        devices known, discovery, refresh ticker, commands, scene trigger
+src/yxc/client.js                 Yamaha Extended Control HTTP client (GET, response_code)
+src/yxc/model.js                  what a device is, from its answers (pure functions)
+src/discovery.js                  mediated SSDP answers, UPnP descriptions (Yamaha only)
+src/devices.js                    the Gladys device of a zone: features, states
 src/scenes.js                     scene action handlers (manifest `scene_actions`)
 src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+src/i18n.js                       texts produced by the container, four languages
+src/issues.js                     repeated failures logged once (from gladys-subsonic)
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
+scripts/probe.mjs                 read-only probe of a real device, anonymized fixtures (--save)
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+docs/{en,fr,de,es}.md             user documentation, same sections (test/i18n.test.js)
+test/                             node --test, SDK fake Gladys + simulated network (helpers/world.js)
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,12 +76,52 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in English, French, German and Spanish (the
+  languages of Gladys): action messages, manifest texts, widget contents,
+  feature names, errors, and `docs/en.md`, `fr.md`, `de.md`, `es.md` with the
+  same sections. `test/i18n.test.js` fails on a missing or empty language.
+  German says "du" (never "Sie"/"Ihr…"), Spanish "usted".
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
 ---
+
+# Yamaha MusicCast : ce qu'il faut savoir
+
+- **API** : Yamaha Extended Control (YXC), `GET http://<ip>/YamahaExtendedControl/v1/...`, réponse
+  JSON toujours en HTTP 200 avec un `response_code` (0 succès, 3 requête invalide, 4 paramètre
+  invalide, 5 « guarded » : par exemple le volume d'une zone en veille). Pas d'authentification.
+- **Identité** : `system_id` de `system/getDeviceInfo` (repli `device_id`), comme Home Assistant.
+  External id d'une zone : `zone:<system_id>-<zone>`, features `power`, `volume`, `mute`, `input`,
+  `sound_program`, `preset`, `play`, `pause`, `previous`, `next`, `playback_state`, `title`,
+  `artist`, `album`. Figés.
+- **Événements UDP impossibles** : l'appareil pousse ses changements en UDP vers le port annoncé
+  (en-têtes `X-AppName`/`X-AppPort`), donc vers l'IP vue par l'appareil, celle de l'hôte Gladys
+  après NAT ; le conteneur en pont n'a aucun port publié. D'où le sondage : 5 s (réglable) zone
+  allumée, 30 s en veille ou sans réponse, seulement les zones ajoutées.
+- **Découverte** : SSDP médié sur `urn:schemas-upnp-org:device:MediaRenderer:1` ; un appareil
+  MusicCast se reconnaît à `<yamaha:X_yxcControlURL>/YamahaExtendedControl/v1/` dans sa description
+  UPnP (test de `aiomusiccast.check_yamaha_ssdp`). Le cœur ne scanne que la **première** entrée
+  `ssdp` du manifeste.
+- **Volume** : publié en **pourcentage** de la plage `range_step` de la zone (0-161 sur un ampli,
+  0-60 sur une enceinte), car la boîte « Musique » du cœur fixe son curseur à 0-100.
+- **Couples** : `music/*` pour lecture, pause, précédent, suivant, volume, état de lecture (ce que
+  lit la boîte « Musique », qui exige les six) ; `switch/binary` pour marche et sourdine (un état
+  visible, là où `television/volume-mute` n'est qu'un bouton) ; `text/select` (présent dès Gladys
+  5.1.0, valeurs chaînes dans `supported_options`) pour entrée, mode son et favori. Le cœur ne
+  dessine pas `music/play` comme un bouton dans la boîte « appareils de la pièce » (gladys-kodi a
+  choisi `television/*` pour cela) : choix assumé pour la boîte Musique.
+- **Module réseau partagé** : `netusb/setPlayback` agit sur toutes les zones ; une commande de
+  lecture n'est acceptée que si la zone écoute une source `play_info_type: netusb`. Pause refusée
+  sur une radio en direct : repli sur `stop`.
+- **Favoris** : `netusb/recallPreset?zone=&num=` allume la zone ; aucune API ne dit quel favori
+  joue, la liste montre le dernier rappelé depuis Gladys jusqu'au changement d'entrée.
+- **Multiroom (`dist/*`, entrée `mc_link`)** : hors périmètre de la v1.
+- **Fixtures** : pas de réponses réelles publiées sous licence compatible (les tests de Home
+  Assistant et d'aiomusiccast n'en ont pas) ; celles de `test/fixtures/musiccast/` suivent la
+  spécification. `scripts/probe.mjs <ip> --save <dir>` capture de vraies réponses anonymisées.
+- **Heartbeat du SDK** : `publishChangedStates({ heartbeat })` date avec `Date.now()`, pas avec
+  l'horloge injectée : un test le prouve en simulant `Date` (`t.mock.timers`).
 
 # Notes du mainteneur (guim31)
 

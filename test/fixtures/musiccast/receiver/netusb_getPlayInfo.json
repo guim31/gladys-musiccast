@@ -1,0 +1,20 @@
+{
+  "response_code": 0,
+  "input": "spotify",
+  "play_queue_type": "system",
+  "playback": "play",
+  "repeat": "off",
+  "shuffle": "off",
+  "play_time": 63,
+  "total_time": 215,
+  "artist": "Les Exemples",
+  "album": "Album de test",
+  "track": "Chanson d’essai",
+  "albumart_url": "/YamahaRemoteControl/AlbumART/AlbumART0001.jpg",
+  "albumart_id": 1,
+  "usb_devicetype": "unknown",
+  "auto_stopped": false,
+  "attribute": 33554431,
+  "repeat_available": ["off", "one", "all"],
+  "shuffle_available": ["off", "on"]
+}

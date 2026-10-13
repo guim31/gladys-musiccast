@@ -1,0 +1,34 @@
+[
+  {
+    "source_ip": "192.0.2.40",
+    "source_mac": "02:a0:de:00:00:01",
+    "source_port": 1900,
+    "headers": "HTTP/1.1 200 OK\r\nCACHE-CONTROL: max-age=1800\r\nEXT:\r\nLOCATION: http://192.0.2.40:49154/MediaRenderer/desc.xml\r\nSERVER: Network_Module/1.0 (RX-V6A) UPnP/1.0 DLNADOC/1.50\r\nST: urn:schemas-upnp-org:device:MediaRenderer:1\r\nUSN: uuid:9ab0c000-f668-11de-9976-02a0de000001::urn:schemas-upnp-org:device:MediaRenderer:1\r\n\r\n"
+  },
+  {
+    "source_ip": "192.0.2.40",
+    "source_mac": "02:a0:de:00:00:01",
+    "source_port": 1900,
+    "headers": "HTTP/1.1 200 OK\r\nCACHE-CONTROL: max-age=1800\r\nEXT:\r\nLOCATION: http://192.0.2.40:49154/MediaRenderer/desc.xml\r\nSERVER: Network_Module/1.0 (RX-V6A) UPnP/1.0 DLNADOC/1.50\r\nST: urn:schemas-upnp-org:device:MediaRenderer:1\r\nUSN: uuid:9ab0c000-f668-11de-9976-02a0de000001::urn:schemas-upnp-org:device:MediaRenderer:1\r\n\r\n"
+  },
+  {
+    "source_ip": "192.0.2.41",
+    "source_port": 1900,
+    "headers": "HTTP/1.1 200 OK\r\nCACHE-CONTROL: max-age=1800\r\nEXT:\r\nLOCATION: http://192.0.2.41:49154/MediaRenderer/desc.xml\r\nSERVER: Network_Module/1.0 (WX-021) UPnP/1.0 DLNADOC/1.50\r\nST: urn:schemas-upnp-org:device:MediaRenderer:1\r\nUSN: uuid:9ab0c000-f668-11de-9976-02a0de000010::urn:schemas-upnp-org:device:MediaRenderer:1\r\n\r\n"
+  },
+  {
+    "source_ip": "192.0.2.30",
+    "source_port": 1900,
+    "headers": "HTTP/1.1 200 OK\r\nCACHE-CONTROL: max-age=1800\r\nEXT:\r\nLOCATION: http://192.0.2.30:1400/xml/device_description.xml\r\nSERVER: Linux UPnP/1.0 DummyTV/1.0\r\nST: urn:schemas-upnp-org:device:MediaRenderer:1\r\nUSN: uuid:00000000-0000-0000-0000-000000000000::urn:schemas-upnp-org:device:MediaRenderer:1\r\n\r\n"
+  },
+  {
+    "source_ip": "192.0.2.50",
+    "source_port": 1900,
+    "headers": "HTTP/1.1 200 OK\r\nCACHE-CONTROL: max-age=1800\r\nEXT:\r\nLOCATION: http://198.51.100.7:49154/MediaRenderer/desc.xml\r\nSERVER: Network_Module/1.0 UPnP/1.0\r\nST: urn:schemas-upnp-org:device:MediaRenderer:1\r\nUSN: uuid:00000000-0000-0000-0000-000000000050::urn:schemas-upnp-org:device:MediaRenderer:1\r\n\r\n"
+  },
+  {
+    "source_ip": "fe80::1",
+    "source_port": 1900,
+    "headers": "HTTP/1.1 200 OK\r\nST: urn:schemas-upnp-org:device:MediaRenderer:1\r\n\r\n"
+  }
+]

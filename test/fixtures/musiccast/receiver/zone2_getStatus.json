@@ -1,0 +1,20 @@
+{
+  "response_code": 0,
+  "power": "standby",
+  "sleep": 0,
+  "volume": 40,
+  "mute": false,
+  "max_volume": 161,
+  "input": "tuner",
+  "input_text": "Tuner",
+  "distribution_enable": true,
+  "link_control": "standard",
+  "link_audio_delay": "audio_sync",
+  "disable_flags": 0,
+  "actual_volume": {
+    "mode": "db",
+    "value": -60.5,
+    "unit": "dB"
+  },
+  "party_enable": false
+}
