@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-13
+
 ### Added
 
 - Local control of Yamaha MusicCast amplifiers, soundbars and speakers through
@@ -30,4 +32,5 @@ the notes of the version's GitHub Release.
 - "Search for MusicCast devices" button on the configuration page.
 - Texts and documentation in English, French, German and Spanish.
 
-[Unreleased]: https://github.com/guim31/gladys-musiccast/commits/main
+[Unreleased]: https://github.com/guim31/gladys-musiccast/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/guim31/gladys-musiccast/releases/tag/v1.0.1

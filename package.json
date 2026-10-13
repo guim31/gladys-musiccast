@@ -1,6 +1,6 @@
 {
   "name": "gladys-musiccast",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Gladys Assistant integration for Yamaha MusicCast amplifiers, soundbars and speakers (local control).",
   "type": "module",
