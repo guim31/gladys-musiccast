@@ -1,0 +1,30 @@
+{
+  "response_code": 0,
+  "network_name": "Chambre",
+  "connection": "wireless_lan",
+  "dhcp": true,
+  "ip_address": "192.0.2.41",
+  "subnet_mask": "255.255.255.0",
+  "default_gateway": "192.0.2.1",
+  "dns_server_1": "192.0.2.1",
+  "dns_server_2": "0.0.0.0",
+  "wireless_lan": {
+    "ssid": "example",
+    "type": "wpa2-psk(aes)",
+    "key": "",
+    "ch": 6,
+    "strength": 72
+  },
+  "musiccast_network": {
+    "ready": true,
+    "device_type": "standard",
+    "child_num": 0,
+    "ch": 0,
+    "initial_join_running": false
+  },
+  "mac_address": {
+    "wired_lan": "02A0DE000010",
+    "wireless_lan": "02A0DE000011",
+    "wireless_direct": "02A0DE000012"
+  }
+}

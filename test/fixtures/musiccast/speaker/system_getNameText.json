@@ -1,0 +1,36 @@
+{
+  "response_code": 0,
+  "zone_list": [
+    {
+      "id": "main",
+      "text": "Main"
+    }
+  ],
+  "input_list": [
+    {
+      "id": "net_radio",
+      "text": "Net Radio"
+    },
+    {
+      "id": "server",
+      "text": "Server"
+    },
+    {
+      "id": "bluetooth",
+      "text": "Bluetooth"
+    },
+    {
+      "id": "airplay",
+      "text": "AirPlay"
+    },
+    {
+      "id": "spotify",
+      "text": "Spotify"
+    },
+    {
+      "id": "mc_link",
+      "text": "MC Link"
+    }
+  ],
+  "sound_program_list": []
+}

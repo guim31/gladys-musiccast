@@ -1,0 +1,18 @@
+{
+  "response_code": 0,
+  "model_name": "WX-021",
+  "destination": "BG",
+  "device_id": "02A0DE000010",
+  "system_id": "0B000010",
+  "system_version": 2.27,
+  "api_version": 2.11,
+  "netmodule_generation": 2,
+  "netmodule_version": "0247    ",
+  "netmodule_checksum": "00000000",
+  "serial_number": "Y000000B",
+  "category_code": 1,
+  "operation_mode": "normal",
+  "update_error_code": "00000000",
+  "net_module_num": 1,
+  "update_data_type": 0
+}

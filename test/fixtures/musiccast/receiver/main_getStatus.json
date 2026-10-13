@@ -1,0 +1,33 @@
+{
+  "response_code": 0,
+  "power": "on",
+  "sleep": 0,
+  "volume": 81,
+  "mute": false,
+  "max_volume": 161,
+  "input": "spotify",
+  "input_text": "Spotify",
+  "distribution_enable": true,
+  "sound_program": "straight",
+  "surr_decoder_type": "toggle",
+  "surround_3d": false,
+  "direct": false,
+  "pure_direct": false,
+  "enhancer": true,
+  "tone_control": {
+    "mode": "manual",
+    "bass": 0,
+    "treble": 0
+  },
+  "dialogue_level": 0,
+  "link_control": "standard",
+  "link_audio_delay": "audio_sync",
+  "disable_flags": 0,
+  "contents_display": true,
+  "actual_volume": {
+    "mode": "db",
+    "value": -40.0,
+    "unit": "dB"
+  },
+  "party_enable": false
+}
