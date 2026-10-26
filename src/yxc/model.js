@@ -219,7 +219,21 @@ export function zoneStateOf(status) {
   };
 }
 
-/** What the network module plays, from netusb/getPlayInfo. */
+// netusb/getPlayInfo says `-60000` when it does not know the position
+// (Spotify Connect, live radio on some firmwares).
+const seconds = (value) =>
+  Number.isFinite(value) && value >= 0 ? Math.min(Math.round(value), MAX_SECONDS) : null;
+export const MAX_SECONDS = 86_400;
+
+const modes = (list) =>
+  Array.isArray(list) ? list.filter((mode) => typeof mode === 'string') : null;
+
+/**
+ * What the network module plays, from netusb/getPlayInfo. `shuffleAvailable`
+ * and `repeatAvailable` are null on firmwares that do not send them (older
+ * than API 1.19), and an empty list when the source has no such mode
+ * (Spotify Connect, a radio).
+ */
 export function playInfoOf(info) {
   return {
     input: typeof info?.input === 'string' ? info.input : null,
@@ -228,8 +242,52 @@ export function playInfoOf(info) {
     track: cleanText(info?.track),
     artist: cleanText(info?.artist),
     album: cleanText(info?.album),
+    playTime: seconds(info?.play_time), // null: unknown
+    totalTime: seconds(info?.total_time) ?? 0,
+    shuffle: typeof info?.shuffle === 'string' ? info.shuffle : null,
+    repeat: typeof info?.repeat === 'string' ? info.repeat : null,
+    shuffleAvailable: modes(info?.shuffle_available),
+    repeatAvailable: modes(info?.repeat_available),
+    albumartUrl: typeof info?.albumart_url === 'string' ? info.albumart_url.trim() : '',
+    albumartId: Number.isInteger(info?.albumart_id) ? info.albumart_id : null,
   };
 }
+
+/**
+ * The address of the artwork of a play info, or null. The device serves it
+ * under a relative path (`/YamahaRemoteControl/AlbumART/AlbumART7781.jpg`);
+ * a media server may give its own absolute URL. Before API 1.17 the image is
+ * a `.ymf`, a Yamaha format no browser reads, and BMP is refused by Gladys:
+ * neither is offered. The same path can serve another image later (seen:
+ * `AlbumART.ymf` for every track), so `albumart_id`, which the device counts
+ * up at every new image, goes into the URL fragment: never sent, but part of
+ * the artwork key.
+ */
+export function artworkUrlOf(host, info) {
+  const path = info?.albumartUrl;
+  if (!path) {
+    return null;
+  }
+  const absolute = /^https?:\/\//i.test(path);
+  let url;
+  try {
+    url = absolute ? new URL(path) : new URL(path, `${baseOrigin(host)}/`);
+  } catch {
+    return null;
+  }
+  // A media server's URL may have no extension: its bytes are checked when
+  // Gladys asks for them. The device's own files are named by format.
+  const named = absolute
+    ? !/\.(ymf|bmp)$/i.test(url.pathname)
+    : /\.(jpe?g|png)$/i.test(url.pathname);
+  if (!named) {
+    return null;
+  }
+  url.hash = info.albumartId === null ? '' : `id-${info.albumartId}`;
+  return url.href;
+}
+
+const baseOrigin = (host) => `http://${host.includes(':') ? `[${host}]` : host}`;
 
 /**
  * The stored presets, from netusb/getPresetInfo: `[{ num, input, name }]`,

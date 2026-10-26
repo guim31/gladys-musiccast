@@ -19,8 +19,8 @@ Corporation.
   zone's range), mute, input (a list with the names given on the device), sound mode (DSP) where
   available.
 - **Network sources** (Spotify, Net Radio, AirPlay, server, Bluetooth...): play, pause, previous,
-  next, playback state, title, artist and album. The zones work with the **Music** box of the Gladys
-  dashboard.
+  next, playback state, title, artist and album. Each zone is a player of the Gladys 5.3 **Music**
+  widget (see below).
 - **Presets** (favorites) stored on the device: a list to recall one.
 - **Discovery** through the network search of Gladys (SSDP, mediated by the core), or by IP
   address.
@@ -32,9 +32,30 @@ Corporation.
 
 ## Requirements
 
-- Gladys Assistant **5.1.0** or later.
+- Gladys Assistant **5.3.0** or later.
 - A Yamaha MusicCast device on the same local network, with **Network Standby** enabled to be
   controlled while in standby.
+
+## Gladys 5.3 Music player
+
+Since 1.1.0 each zone carries the `music` features of Gladys 5.3, published through the SDK's
+`publishNowPlaying` (diffed, the position sampled rather than streamed):
+
+- artwork (the device's `albumart_url`, keyed with its `albumart_id`; an image over 300 KB made
+  smaller in plain JavaScript by `src/artwork-resize.js`), title, artist, album, duration,
+  position, shuffle, repeat, mute and volume; nothing loaded (standby, HDMI, tuner): IDLE and the
+  texts cleared;
+- writable: playback state (0 pause, 1 play, 2 stop), position (`netusb/setPlayPosition`, the
+  media server input only), shuffle and repeat (`setShuffle` / `setRepeat` from API 1.19, toggles
+  before), mute and volume;
+- manifest `"music": { "browse": true }`: the device's presets as a flat catalog, played with
+  `netusb/recallPreset`. The device's own menus (`getListInfo` / `setListControl`) are left out:
+  one cursor per input, moved by index, shared with the MusicCast app and the remote.
+
+The ids are those of 1.0 (`title`, `artist`, `album`, `mute`, `playback_state`): zones added with
+1.0 get the new features with **Update** in the Discovery tab, without breaking scenes or
+dashboards. Verified only against real `getPlayInfo` answers published by other projects
+(`test/fixtures/musiccast/real/`), never on a device.
 
 ## Installation
 
@@ -77,8 +98,9 @@ The full user documentation is in [English](docs/en.md), [French](docs/fr.md),
 
 ## Development
 
-Node.js 22+, ESM, no build step. The only runtime dependency is
-[`@gladysassistant/integration-sdk`](https://github.com/GladysAssistant/integration-sdk-js).
+Node.js 22+, ESM, no build step. The runtime dependencies are
+[`@gladysassistant/integration-sdk`](https://github.com/GladysAssistant/integration-sdk-js) and
+`jpeg-js` (the JPEG encoder of the artwork resizer).
 
 ```bash
 npm install

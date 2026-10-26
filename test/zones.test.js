@@ -15,7 +15,6 @@ import {
   tick,
 } from './helpers/world.js';
 import { HEARTBEAT_MS } from '../src/hub.js';
-import { NOTHING } from '../src/devices.js';
 
 const setValue = (world, device, key, value) =>
   world.fake.setValue(
@@ -42,8 +41,9 @@ test('the states of a playing zone and of a zone in standby', async () => {
   // Zone 2 is in standby on the tuner: nothing plays there.
   assert.equal(lastState(world, cuisine, 'power'), 0);
   assert.equal(lastState(world, cuisine, 'input'), 'tuner');
-  assert.equal(lastState(world, cuisine, 'playback_state'), 0);
-  assert.equal(lastState(world, cuisine, 'title'), NOTHING);
+  // Since 1.1.0: IDLE (2), the texts cleared (Gladys 5.3 player).
+  assert.equal(lastState(world, cuisine, 'playback_state'), 2);
+  assert.equal(lastState(world, cuisine, 'title'), '');
   world.app.stop();
 });
 
@@ -152,6 +152,10 @@ test('only the changes are published, and a heartbeat every 6 hours', async (t) 
     await tick(world, ms);
   };
   const count = () => world.fake.states.length;
+  // Paused: the simulated device does not move its position (a playing one
+  // would, and the SDK republishes a position only when it drifts > 3 s).
+  world.network.devices[RECEIVER].playInfo.playback = 'pause';
+  await step(5000);
   const start = count();
   await step(5000);
   assert.equal(count(), start, 'nothing changed, nothing sent');
@@ -178,8 +182,8 @@ test('power, volume, mute, input and sound mode commands reach the device and co
   assert.equal(lastState(world, salon, 'mute'), 1);
   await setValue(world, salon, 'input', 'hdmi1');
   assert.equal(lastState(world, salon, 'input'), 'hdmi1');
-  assert.equal(lastState(world, salon, 'title'), NOTHING, 'HDMI is not a network source');
-  assert.equal(lastState(world, salon, 'playback_state'), 0);
+  assert.equal(lastState(world, salon, 'title'), '', 'HDMI is not a network source');
+  assert.equal(lastState(world, salon, 'playback_state'), 2);
   await setValue(world, salon, 'sound_program', 'drama');
   assert.equal(lastState(world, salon, 'sound_program'), 'drama');
 
@@ -227,7 +231,7 @@ test('pause on a live radio stops it', async () => {
   await setValue(world, salon, 'input', 'net_radio');
   await setValue(world, salon, 'pause', 1);
   assert.ok(world.network.commands.includes(`${RECEIVER} netusb/setPlayback?playback=stop`));
-  assert.equal(lastState(world, salon, 'playback_state'), 0);
+  assert.equal(lastState(world, salon, 'playback_state'), 2);
   world.app.stop();
 });
 

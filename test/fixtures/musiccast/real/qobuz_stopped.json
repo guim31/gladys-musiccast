@@ -1,0 +1,20 @@
+{
+  "response_code": 0,
+  "input": "qobuz",
+  "play_queue_type": "system",
+  "playback": "stop",
+  "repeat": "off",
+  "shuffle": "on",
+  "play_time": 0,
+  "total_time": 1293,
+  "artist": "Adam Schatz",
+  "album": "Civil Engineering Vol. 1",
+  "track": "A Pox On Your Upstairs Neighbors",
+  "albumart_url": "",
+  "albumart_id": 6904,
+  "usb_devicetype": "unknown",
+  "auto_stopped": false,
+  "attribute": 84148639,
+  "repeat_available": ["off", "one", "all"],
+  "shuffle_available": ["off", "on"]
+}

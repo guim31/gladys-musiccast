@@ -7,6 +7,7 @@
 import { createLogger } from '@gladysassistant/integration-sdk';
 import { normalizeConfig } from './config.js';
 import { Hub } from './hub.js';
+import { artwork, browse, play } from './music.js';
 import { UserError } from './i18n.js';
 import { SCENE_ACTIONS } from './scenes.js';
 import { WIDGETS } from './widgets.js';
@@ -63,6 +64,12 @@ export function registerHandlers(gladys, options = {}) {
   gladys.onPoll(whenReady((device) => hub.poll(device)));
   gladys.onDeviceCreated(whenReady((device) => hub.onDeviceCreated(device)));
   gladys.onDeviceUpdated(whenReady((device) => hub.onDeviceCreated(device)));
+  // The Gladys 5.3 music player: the presets as a catalog, the artwork.
+  gladys.onMusicBrowse(whenReady((device, request) => browse(hub, device, request)));
+  gladys.onMusicPlay(whenReady((device, media) => play(hub, device, media)));
+  gladys.onMusicGetArtwork(
+    whenReady((key) => artwork(gladys, options.fetch ?? globalThis.fetch, key)),
+  );
   gladys.onConfigUpdated(whenReady((config) => hub.reconfigure(normalizeConfig(config))));
 
   // The configuration page shows what an action resolves, in the user's

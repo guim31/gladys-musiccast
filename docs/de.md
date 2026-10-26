@@ -30,7 +30,7 @@ der Yamaha Corporation.
 
 ## Voraussetzungen
 
-- Gladys 5.1.0 oder neuer.
+- Gladys 5.3.0 oder neuer (Musik-Player).
 - Ein Yamaha-Gerät mit MusicCast (es erscheint in der MusicCast-App), im selben lokalen Netzwerk
   wie Gladys.
 - Um ein Gerät im Standby zu steuern, aktiviere sein **Network Standby** (Netzwerk-Einstellungen
@@ -69,25 +69,24 @@ hinzugefügten Zonen werden regelmäßig gelesen.
 
 ### Funktionen einer Zone
 
-| Funktion                   | Typ in Gladys             | Hinweise                                                                                                     |
-| -------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Betrieb                    | Ein/Aus-Schalter          | An / Standby.                                                                                                |
-| Lautstärke                 | Musiklautstärke (0-100 %) | Prozent des Bereichs der Zone (0 bis 161 Schritte bei einem Receiver, 0 bis 60 bei einem Lautsprecher...).   |
-| Stumm                      | Ein/Aus-Schalter          |                                                                                                              |
-| Eingang                    | Auswahl                   | Die Eingänge der Zone, mit den am Gerät vergebenen Namen.                                                    |
-| Klangprogramm              | Auswahl                   | Nur bei Zonen mit Klangprogrammen (Receiver, Soundbars).                                                     |
-| Favorit                    | Auswahl                   | Ruft einen gespeicherten Favoriten auf; zeigt den zuletzt aus Gladys aufgerufenen, bis der Eingang wechselt. |
-| Wiedergabe, Pause          | Musiktasten               | Nur Netzwerkquellen. Pause stoppt ein Live-Radio.                                                            |
-| Vorheriger, Nächster Titel | Musiktasten               | Nur Netzwerkquellen.                                                                                         |
-| Wiedergabestatus           | Musik-Wiedergabestatus    | Läuft / läuft nicht.                                                                                         |
-| Titel, Interpret, Album    | Text                      | Was eine Netzwerkquelle spielt; sonst „—“.                                                                   |
+| Funktion                   | Typ in Gladys                  | Hinweise                                                                                                     |
+| -------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| Betrieb                    | Ein/Aus-Schalter               | An / Standby.                                                                                                |
+| Lautstärke                 | Musiklautstärke (0-100 %)      | Prozent des Bereichs der Zone (0 bis 161 Schritte bei einem Receiver, 0 bis 60 bei einem Lautsprecher...).   |
+| Stumm                      | Stumm (Musik)                  |                                                                                                              |
+| Eingang                    | Auswahl                        | Die Eingänge der Zone, mit den am Gerät vergebenen Namen.                                                    |
+| Klangprogramm              | Auswahl                        | Nur bei Zonen mit Klangprogrammen (Receiver, Soundbars).                                                     |
+| Favorit                    | Auswahl                        | Ruft einen gespeicherten Favoriten auf; zeigt den zuletzt aus Gladys aufgerufenen, bis der Eingang wechselt. |
+| Wiedergabe, Pause          | Musiktasten                    | Nur Netzwerkquellen. Pause stoppt ein Live-Radio.                                                            |
+| Vorheriger, Nächster Titel | Musiktasten                    | Nur Netzwerkquellen.                                                                                         |
+| Wiedergabestatus           | Musik-Wiedergabestatus         | Pause (0) / läuft (1) / gestoppt (2); steuerbar.                                                             |
+| Titel, Interpret, Album    | Musik: Titel, Interpret, Album | Was eine Netzwerkquelle spielt; sonst leer. Cover, Dauer, Position, Zufall, Wiederholung: siehe unten.       |
 
 Die Wiedergabefunktionen gibt es nur bei Geräten mit Netzwerkmodul, das sich alle Zonen eines
 Geräts teilen: Bei einer Zone, die einen anderen Eingang hört (HDMI, Tuner...), werden die
 Wiedergabetasten abgelehnt, damit sie nicht die Musik einer anderen Zone anhalten.
 
-Die Zonen funktionieren auch mit der **Musik**-Box des Gladys-Dashboards (Wiedergabe, Pause,
-zurück, weiter und Lautstärke).
+Jede Zone ist ein Player des **Musik**-Widgets von Gladys: siehe nächster Abschnitt.
 
 ### Aktualisierung
 
@@ -101,6 +100,34 @@ Die Favoriten werden alle 5 Minuten neu gelesen.
 
 Nur die geänderten Werte werden an Gladys gesendet, dazu alle 6 Stunden eine Erinnerung, damit ein
 stabiler Wert nie veraltet wirkt.
+
+## Musik-Player von Gladys 5.3
+
+Seit Version 1.1.0 ist jede Zone ein echter Player des **Musik**-Widgets von Gladys 5.3: Cover,
+Titel, Interpret, Album, Fortschrittsbalken, Wiedergabe / Pause / Stopp, Zufallswiedergabe,
+Wiederholung, Stummschaltung und Lautstärke.
+
+- **Was angezeigt wird**: was die Netzwerkquelle der Zone spielt (Spotify, Net Radio, Medienserver,
+  AirPlay, Qobuz...). Bei einem Radiosender ist der Sendername der Titel, bis der Song bekannt ist, danach das Album („Interpret - Titel“ des Senders wird in Interpret und Titel geteilt).
+  Eine Zone im Standby oder an einem anderen Eingang (HDMI, Tuner...) ist „gestoppt“, ohne Titel
+  und ohne Cover.
+- **Cover**: das Bild, das das Gerät liefert (JPEG oder PNG, ab API 1.17; ältere liefern nur ein
+  Yamaha-eigenes Format, das nicht angezeigt wird). Ein zu großes Bild verkleinert die Integration.
+- **Position**: Springen im Titel funktioniert nur am Eingang **Server** (Medienserver); die
+  anderen Quellen lehnen es mit einer Meldung ab. Meldet das Gerät keine Position (Spotify Connect), zählt die Integration sie ab Titelbeginn.
+- **Zufall und Wiederholung**: soweit die Quelle sie annimmt (die meisten Streamingdienste über
+  Spotify Connect haben keine); vor API 1.19 schaltet die Integration den Modus um, bis der
+  gewünschte erreicht ist.
+- **Durchsuchen**: Das Player-Panel listet die **Favoriten** des Geräts; einer davon startet auf der
+  Zone (die sich einschaltet). Die Menüs der Dienste (Spotify, Net Radio...) werden nicht angeboten:
+  Das Gerät hat pro Quelle nur einen Navigationszeiger, den es mit der MusicCast-App teilt. Keine
+  Suche, keine Warteschlange.
+- **Mit 1.0 hinzugefügte Zonen**: Öffne den Tab **Entdecken** der Integration und klicke für jede
+  Zone auf **Aktualisieren**. Die IDs ändern sich nicht: Szenen und Dashboards funktionieren
+  weiter; Stumm, Titel, Interpret und Album werden Musik-Funktionen. Gestoppt ist der
+  Wiedergabestatus jetzt 2 (nicht mehr 0): Eine Szene „Wiedergabestatus = 0“ löst bei einem Stopp
+  nicht mehr aus.
+- Das eigene **MusicCast**-Widget der Integration bleibt (Eingang, Klangprogramm, Betrieb).
 
 ## Dashboard-Widget
 

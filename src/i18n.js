@@ -35,6 +35,11 @@ export const NAMES = {
     title: 'Title',
     artist: 'Artist',
     album: 'Album',
+    artwork: 'Artwork',
+    duration: 'Duration',
+    position: 'Position',
+    shuffle: 'Shuffle',
+    repeat: 'Repeat',
   },
   fr: {
     power: 'Alimentation',
@@ -51,6 +56,11 @@ export const NAMES = {
     title: 'Titre',
     artist: 'Artiste',
     album: 'Album',
+    artwork: 'Pochette',
+    duration: 'Durée',
+    position: 'Position',
+    shuffle: 'Lecture aléatoire',
+    repeat: 'Répétition',
   },
   de: {
     power: 'Betrieb',
@@ -67,6 +77,11 @@ export const NAMES = {
     title: 'Titel',
     artist: 'Interpret',
     album: 'Album',
+    artwork: 'Cover',
+    duration: 'Dauer',
+    position: 'Position',
+    shuffle: 'Zufallswiedergabe',
+    repeat: 'Wiederholung',
   },
   es: {
     power: 'Encendido',
@@ -83,6 +98,11 @@ export const NAMES = {
     title: 'Título',
     artist: 'Artista',
     album: 'Álbum',
+    artwork: 'Carátula',
+    duration: 'Duración',
+    position: 'Posición',
+    shuffle: 'Reproducción aleatoria',
+    repeat: 'Repetición',
   },
 };
 
@@ -142,6 +162,24 @@ export const MESSAGES = {
     fr: 'La lecture ne se pilote que sur une source réseau (Spotify, Net Radio, AirPlay...).',
     de: 'Die Wiedergabe lässt sich nur bei einer Netzwerkquelle steuern (Spotify, Net Radio, AirPlay...).',
     es: 'La reproducción solo se controla en una fuente de red (Spotify, Net Radio, AirPlay...).',
+  },
+  noSeek: {
+    en: 'This source cannot jump within the track: only the media server (Server input) can.',
+    fr: 'Cette source ne permet pas de se déplacer dans le morceau : seul le serveur multimédia (entrée Server) le peut.',
+    de: 'Diese Quelle kann nicht im Titel springen: Das kann nur der Medienserver (Eingang Server).',
+    es: 'Esta fuente no permite moverse dentro de la pista: solo el servidor multimedia (entrada Server) puede.',
+  },
+  noMode: {
+    en: 'This source has no such shuffle or repeat mode.',
+    fr: 'Cette source n’a pas ce mode de lecture aléatoire ou de répétition.',
+    de: 'Diese Quelle hat diesen Zufalls- oder Wiederholungsmodus nicht.',
+    es: 'Esta fuente no tiene ese modo de reproducción aleatoria o de repetición.',
+  },
+  unknownMedia: {
+    en: 'This favorite no longer exists on the MusicCast device: choose it again.',
+    fr: 'Ce favori n’existe plus sur l’appareil MusicCast : choisissez-le à nouveau.',
+    de: 'Dieser Favorit existiert auf dem MusicCast-Gerät nicht mehr: Wähle ihn erneut.',
+    es: 'Este favorito ya no existe en el dispositivo MusicCast: elíjalo de nuevo.',
   },
   done: { en: 'Done', fr: 'C’est fait', de: 'Erledigt', es: 'Hecho' },
   noDevice: {

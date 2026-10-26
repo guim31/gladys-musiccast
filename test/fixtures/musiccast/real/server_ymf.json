@@ -1,0 +1,17 @@
+{
+  "response_code": 0,
+  "input": "server",
+  "playback": "play",
+  "repeat": "off",
+  "shuffle": "off",
+  "play_time": 2,
+  "total_time": 0,
+  "artist": "Bach",
+  "album": "A Masterpiece Collection",
+  "track": "Bouree In E Minor",
+  "albumart_url": "/YamahaRemoteControl/AlbumART/AlbumART.ymf",
+  "albumart_id": 139,
+  "usb_devicetype": "unknown",
+  "auto_stopped": false,
+  "attribute": 16777727
+}

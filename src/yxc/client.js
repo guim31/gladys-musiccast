@@ -128,5 +128,12 @@ export function createClient(
     // every zone of the device.
     setPlayback: (playback) => get('netusb/setPlayback', { playback }),
     recallPreset: (zone, num) => get('netusb/recallPreset', { zone, num }),
+    // The media server input only (YXC Advanced).
+    setPlayPosition: (position) => get('netusb/setPlayPosition', { position }),
+    // API 1.19 and later; older firmwares only toggle.
+    setShuffle: (mode) => get('netusb/setShuffle', { mode }),
+    setRepeat: (mode) => get('netusb/setRepeat', { mode }),
+    toggleShuffle: () => get('netusb/toggleShuffle'),
+    toggleRepeat: () => get('netusb/toggleRepeat'),
   };
 }

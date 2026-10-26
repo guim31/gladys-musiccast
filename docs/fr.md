@@ -30,7 +30,7 @@ Corporation.
 
 ## Prérequis
 
-- Gladys 5.1.0 ou plus récent.
+- Gladys 5.3.0 ou plus récent (lecteur Musique).
 - Un appareil Yamaha compatible MusicCast (il apparaît dans l'application MusicCast), sur le même
   réseau local que Gladys.
 - Pour piloter un appareil en veille, activez sa **veille réseau** (Network Standby, dans les
@@ -71,25 +71,24 @@ ajoutées à Gladys sont lues régulièrement.
 
 ### Fonctionnalités d'une zone
 
-| Fonctionnalité        | Type dans Gladys               | Remarques                                                                                              |
-| --------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| Alimentation          | Interrupteur                   | Allumé / veille.                                                                                       |
-| Volume                | Volume de la musique (0-100 %) | Pourcentage de la plage de la zone (0 à 161 pas sur un ampli, 0 à 60 sur une enceinte...).             |
-| Sourdine              | Interrupteur                   |                                                                                                        |
-| Entrée                | Sélection                      | Les entrées de la zone, avec les noms donnés sur l'appareil.                                           |
-| Mode son              | Sélection                      | Seulement sur les zones à programmes sonores (amplis, barres de son).                                  |
-| Favori                | Sélection                      | Rappelle un favori enregistré ; affiche le dernier rappelé depuis Gladys jusqu'au changement d'entrée. |
-| Lecture, Pause        | Boutons musique                | Sources réseau seulement. Pause arrête une radio en direct.                                            |
-| Précédent, Suivant    | Boutons musique                | Sources réseau seulement.                                                                              |
-| État de lecture       | État de lecture musique        | En lecture / à l'arrêt.                                                                                |
-| Titre, Artiste, Album | Texte                          | Ce que joue une source réseau ; « — » sinon.                                                           |
+| Fonctionnalité        | Type dans Gladys                | Remarques                                                                                                     |
+| --------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Alimentation          | Interrupteur                    | Allumé / veille.                                                                                              |
+| Volume                | Volume de la musique (0-100 %)  | Pourcentage de la plage de la zone (0 à 161 pas sur un ampli, 0 à 60 sur une enceinte...).                    |
+| Sourdine              | Sourdine (musique)              |                                                                                                               |
+| Entrée                | Sélection                       | Les entrées de la zone, avec les noms donnés sur l'appareil.                                                  |
+| Mode son              | Sélection                       | Seulement sur les zones à programmes sonores (amplis, barres de son).                                         |
+| Favori                | Sélection                       | Rappelle un favori enregistré ; affiche le dernier rappelé depuis Gladys jusqu'au changement d'entrée.        |
+| Lecture, Pause        | Boutons musique                 | Sources réseau seulement. Pause arrête une radio en direct.                                                   |
+| Précédent, Suivant    | Boutons musique                 | Sources réseau seulement.                                                                                     |
+| État de lecture       | État de lecture musique         | En pause (0) / en lecture (1) / arrêt (2) ; pilotable.                                                        |
+| Titre, Artiste, Album | Titre, artiste, album (musique) | Ce que joue une source réseau ; vide sinon. Pochette, durée, position, aléatoire, répétition : voir plus bas. |
 
 Les fonctionnalités de lecture n'existent que sur les appareils dotés d'un module réseau, partagé
 par toutes les zones d'un appareil : sur une zone qui écoute une autre entrée (HDMI, tuner...), les
 boutons de lecture sont refusés pour ne pas mettre en pause la musique d'une autre zone.
 
-Les zones fonctionnent aussi avec la boîte **Musique** du tableau de bord de Gladys (lecture,
-pause, précédent, suivant et volume).
+Chaque zone est un lecteur du widget **Musique** de Gladys : voir la section suivante.
 
 ### Rafraîchissement
 
@@ -103,6 +102,36 @@ Les favoris sont relus toutes les 5 minutes.
 
 Seules les valeurs qui ont changé sont envoyées à Gladys, plus un rappel toutes les 6 heures pour
 qu'une valeur stable ne paraisse jamais périmée.
+
+## Lecteur Musique de Gladys 5.3
+
+Depuis la version 1.1.0, chaque zone est un vrai lecteur du widget **Musique** de Gladys 5.3 :
+pochette, titre, artiste, album, barre de progression, lecture / pause / arrêt, aléatoire,
+répétition, sourdine et volume.
+
+- **Ce qui est affiché** : ce que joue la source réseau de la zone (Spotify, Net Radio, serveur
+  multimédia, AirPlay, Qobuz...). Sur une radio, le nom de la station sert de titre tant que le
+  morceau n'est pas connu, puis d'album (« Artiste - Titre » de la radio découpé en artiste et titre). Une zone en veille ou sur une autre entrée (HDMI, tuner...) est « à
+  l'arrêt », sans titre ni pochette.
+- **Pochette** : l'image que l'appareil fournit (JPEG ou PNG, à partir de l'API 1.17 ; les plus
+  anciens n'en donnent qu'un format propre à Yamaha, non affiché). Une image trop lourde est
+  réduite par l'intégration.
+- **Position** : se déplacer dans le morceau ne marche qu'avec l'entrée **Server** (serveur
+  multimédia) ; les autres sources le refusent avec un message. Quand l'appareil ne donne pas la
+  position (Spotify Connect), l'intégration la compte depuis le début du morceau.
+- **Aléatoire et répétition** : selon ce que la source accepte (la plupart des services de
+  streaming en Spotify Connect n'en ont pas) ; avant l'API 1.19, l'intégration bascule le mode
+  jusqu'à atteindre celui demandé.
+- **Parcourir** : le panneau du lecteur liste les **favoris** de l'appareil ; en choisir un le
+  lance sur la zone (qui s'allume). Les menus des services (Spotify, Net Radio...) ne sont pas
+  proposés : l'appareil n'a qu'un curseur de navigation par source, partagé avec l'application
+  MusicCast. Ni recherche ni file d'attente.
+- **Zones déjà ajoutées en 1.0** : ouvrez l'onglet **Découvrir** de l'intégration et cliquez sur
+  **Mettre à jour** pour chaque zone. Les identifiants ne changent pas : scènes et tableaux de bord
+  continuent de marcher ; Sourdine, Titre, Artiste et Album deviennent des fonctionnalités musique.
+  À l'arrêt, l'état de lecture vaut désormais 2 (et non plus 0) : une scène « état de lecture = 0 »
+  ne se déclenche plus sur un arrêt.
+- Le widget **MusicCast** de l'intégration reste disponible (entrée, mode son, alimentation).
 
 ## Widget de tableau de bord
 

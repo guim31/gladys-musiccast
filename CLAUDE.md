@@ -9,7 +9,7 @@ A Gladys Assistant **external integration**: a Node.js service (Node 22+, ESM,
 no build step) that runs in its own sandboxed Docker container and talks to
 Gladys through
 [`@gladysassistant/integration-sdk`](https://github.com/GladysAssistant/integration-sdk-js),
-its only runtime dependency. It started from the official JavaScript template.
+its main runtime dependency (plus `jpeg-js`, for `src/artwork-resize.js`). It started from the official JavaScript template.
 
 ## Commands
 
@@ -40,6 +40,8 @@ src/discovery.js                  mediated SSDP answers, UPnP descriptions (Yama
 src/devices.js                    the Gladys device of a zone: features, states
 src/scenes.js                     scene action handlers (manifest `scene_actions`)
 src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+src/music.js                      Gladys 5.3 music player: presets as catalog, artwork handler
+src/artwork-resize.js             artwork over 300 KB made smaller (copied as is from gladys-mopidy)
 src/i18n.js                       texts produced by the container, four languages
 src/issues.js                     repeated failures logged once (from gladys-subsonic)
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
@@ -94,7 +96,7 @@ test/                             node --test, SDK fake Gladys + simulated netwo
 - **Identité** : `system_id` de `system/getDeviceInfo` (repli `device_id`), comme Home Assistant.
   External id d'une zone : `zone:<system_id>-<zone>`, features `power`, `volume`, `mute`, `input`,
   `sound_program`, `preset`, `play`, `pause`, `previous`, `next`, `playback_state`, `title`,
-  `artist`, `album`. Figés.
+  `artist`, `album`, et depuis 1.1.0 `artwork`, `duration`, `position`, `shuffle`, `repeat`. Figés.
 - **Événements UDP impossibles** : l'appareil pousse ses changements en UDP vers le port annoncé
   (en-têtes `X-AppName`/`X-AppPort`), donc vers l'IP vue par l'appareil, celle de l'hôte Gladys
   après NAT ; le conteneur en pont n'a aucun port publié. D'où le sondage : 5 s (réglable) zone
@@ -105,9 +107,9 @@ test/                             node --test, SDK fake Gladys + simulated netwo
   `ssdp` du manifeste.
 - **Volume** : publié en **pourcentage** de la plage `range_step` de la zone (0-161 sur un ampli,
   0-60 sur une enceinte), car la boîte « Musique » du cœur fixe son curseur à 0-100.
-- **Couples** : `music/*` pour lecture, pause, précédent, suivant, volume, état de lecture (ce que
-  lit la boîte « Musique », qui exige les six) ; `switch/binary` pour marche et sourdine (un état
-  visible, là où `television/volume-mute` n'est qu'un bouton) ; `text/select` (présent dès Gladys
+- **Couples** : `music/*` pour lecture, pause, précédent, suivant, volume, sourdine, état de
+  lecture et le « now playing » de Gladys 5.3 (1.1.0 : `mute` switch → music, `title`/`artist`/
+  `album` text → music, mêmes ids, publiés par `publishNowPlaying`) ; `switch/binary` pour marche ; `text/select` (présent dès Gladys
   5.1.0, valeurs chaînes dans `supported_options`) pour entrée, mode son et favori. Le cœur ne
   dessine pas `music/play` comme un bouton dans la boîte « appareils de la pièce » (gladys-kodi a
   choisi `television/*` pour cela) : choix assumé pour la boîte Musique.
@@ -117,9 +119,15 @@ test/                             node --test, SDK fake Gladys + simulated netwo
 - **Favoris** : `netusb/recallPreset?zone=&num=` allume la zone ; aucune API ne dit quel favori
   joue, la liste montre le dernier rappelé depuis Gladys jusqu'au changement d'entrée.
 - **Multiroom (`dist/*`, entrée `mc_link`)** : hors périmètre de la v1.
-- **Fixtures** : pas de réponses réelles publiées sous licence compatible (les tests de Home
-  Assistant et d'aiomusiccast n'en ont pas) ; celles de `test/fixtures/musiccast/` suivent la
-  spécification. `scripts/probe.mjs <ip> --save <dir>` capture de vraies réponses anonymisées.
+- **Fixtures** : celles de `test/fixtures/musiccast/receiver|speaker` suivent la spécification ;
+  `test/fixtures/musiccast/real/` contient de **vraies** réponses `getPlayInfo` tirées de captures
+  et d'issues publiques (sources dans son README).
+- **getPlayInfo (1.1.0)** : `play_time` -60000 = inconnu (Spotify Connect) ; Net Radio met la
+  station dans `artist` et « Artiste - Titre » dans `track` ; `albumart_url` relatif, parfois le même
+  chemin pour chaque morceau (`AlbumART.ymf`, seul `albumart_id` change : il entre dans la clé de
+  pochette), `.ymf` illisible avant l'API 1.17 ; `shuffle_available`/`repeat_available` vides =
+  mode refusé par la source, absents avant 1.19 (et `setShuffle`/`setRepeat` aussi : bascules).
+  `setPlayPosition` : entrée `server` seulement. `scripts/probe.mjs <ip> --save <dir>` capture de vraies réponses anonymisées.
 - **Heartbeat du SDK** : `publishChangedStates({ heartbeat })` date avec `Date.now()`, pas avec
   l'horloge injectée : un test le prouve en simulant `Date` (`t.mock.timers`).
 
