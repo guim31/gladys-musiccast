@@ -298,15 +298,29 @@ export function buildNowPlaying(unit, zone, zoneState, playInfo) {
         ? MUSIC_PLAYBACK_STATE.IDLE
         : MUSIC_PLAYBACK_STATE.PLAYING; // play, fast forward / reverse
   // A radio gives its station in `artist` and the song, when it knows it,
-  // in `track` ("Artist - Title"): the station is the title until then.
-  const radioName = !playing.track && playing.artist && playing.input === 'net_radio';
+  // in `track`, as "Artist - Title": split it, the station as the album
+  // (the show the track belongs to); the station is the title until then.
+  let { track: title, artist, album } = playing;
+  if (playing.input === 'net_radio') {
+    const station = playing.artist;
+    const dash = title.indexOf(' - ');
+    if (!title) {
+      [title, artist, album] = [station, '', ''];
+    } else if (dash > 0) {
+      [artist, title, album] = [title.slice(0, dash), title.slice(dash + 3), station];
+    } else {
+      [artist, album] = ['', station];
+    }
+  }
   Object.assign(values, {
     playback_state: state,
-    title: radioName ? playing.artist : playing.track,
-    artist: radioName ? '' : playing.artist,
-    album: playing.album,
+    title,
+    artist,
+    album,
     artwork_url: artworkUrlOf(unit.host, playing),
     duration: playing.totalTime,
+    // null: the device does not know it (Spotify Connect: -60000), the hub
+    // counts it (src/hub.js, positionOf).
     position: state === MUSIC_PLAYBACK_STATE.IDLE ? 0 : playing.playTime,
   });
   if (playing.shuffle !== null) {

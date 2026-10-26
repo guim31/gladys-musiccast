@@ -11,7 +11,7 @@
 //
 // A preset id carries its number, input and name: a preset moved to another
 // slot in the MusicCast app is still found by its input and name (a scene
-// keeps playing the right favorite), the number is the fallback.
+// keeps playing the right favorite); a renamed one by its slot and input.
 //
 // Artwork: the key comes from the address the device gives (src/yxc/model.js,
 // artworkUrlOf). The device serves its own small copy; a media server may give
@@ -76,7 +76,9 @@ export async function play(hub, device, media) {
   await hub.readPresets(unit).catch(() => false);
   const preset =
     unit.presets.find((entry) => entry.input === wanted.input && entry.name === wanted.name) ??
-    unit.presets.find((entry) => entry.num === wanted.num);
+    // Renamed in the app: same slot, same input. Anything else in the slot is
+    // another favorite, never played in its place.
+    unit.presets.find((entry) => entry.num === wanted.num && entry.input === wanted.input);
   if (!preset) {
     throw new UserError(MESSAGES.unknownMedia, hub.config.language);
   }

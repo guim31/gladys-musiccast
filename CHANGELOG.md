@@ -15,6 +15,10 @@ the notes of the version's GitHub Release.
 - Gladys 5.3 Music player: each zone shows the artwork, title, artist, album,
   duration and position of what its network source plays, with play / pause /
   stop, seek (media server input), shuffle, repeat, mute and volume.
+- Net Radio: the station's "Artist - Title" is split into artist and title,
+  the station shown as the album (the station alone as the title until the
+  song is known). A position the device does not report (Spotify Connect) is
+  counted by the integration.
 - The device's presets in the player's catalog panel, played on the zone (also
   through the `music.play-media` scene action).
 

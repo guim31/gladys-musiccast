@@ -222,7 +222,7 @@ export function zoneStateOf(status) {
 // netusb/getPlayInfo says `-60000` when it does not know the position
 // (Spotify Connect, live radio on some firmwares).
 const seconds = (value) =>
-  Number.isFinite(value) && value >= 0 ? Math.min(Math.round(value), MAX_SECONDS) : 0;
+  Number.isFinite(value) && value >= 0 ? Math.min(Math.round(value), MAX_SECONDS) : null;
 export const MAX_SECONDS = 86_400;
 
 const modes = (list) =>
@@ -242,8 +242,8 @@ export function playInfoOf(info) {
     track: cleanText(info?.track),
     artist: cleanText(info?.artist),
     album: cleanText(info?.album),
-    playTime: seconds(info?.play_time),
-    totalTime: seconds(info?.total_time),
+    playTime: seconds(info?.play_time), // null: unknown
+    totalTime: seconds(info?.total_time) ?? 0,
     shuffle: typeof info?.shuffle === 'string' ? info.shuffle : null,
     repeat: typeof info?.repeat === 'string' ? info.repeat : null,
     shuffleAvailable: modes(info?.shuffle_available),

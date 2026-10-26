@@ -18,7 +18,11 @@
 // an added zone listens to a network source.
 // -----------------------------------------------------------------------------
 
-import { DEVICE_TRANSPORTS, createLogger } from '@gladysassistant/integration-sdk';
+import {
+  DEVICE_TRANSPORTS,
+  MUSIC_PLAYBACK_STATE,
+  createLogger,
+} from '@gladysassistant/integration-sdk';
 import { IDLE_INTERVAL_SECONDS } from './config.js';
 import {
   CORE_POLL_FREQUENCY,
@@ -61,6 +65,8 @@ export const PRESETS_EVERY_MS = 5 * 60 * 1000;
 // DHCP address?) at most this often.
 export const RESEARCH_EVERY_MS = 10 * 60 * 1000;
 const TICK_MS = 1000;
+// Before reading back a shuffle / repeat toggle (firmwares before API 1.19).
+export const TOGGLE_SETTLE_MS = 300;
 
 /**
  * @param {object} options
@@ -473,11 +479,20 @@ export class Hub {
         ...buildZoneStates(ids, unit, zone, zoneState, unit.lastPresets.get(zone.id)?.num ?? null),
       );
       // One channel per feature: the music ones through publishNowPlaying,
-      // which diffs them and samples the position.
-      const { count } = await this.gladys.publishNowPlaying(
-        ids.device,
-        buildNowPlaying(unit, zone, zoneState, unit.playInfo),
-      );
+      // which diffs them and samples the position. It has no heartbeat: its
+      // snapshot is forgotten every HEARTBEAT_MS, so a stable value is sent
+      // again like the others.
+      const values = buildNowPlaying(unit, zone, zoneState, unit.playInfo);
+      this.positionOf(unit, zone, values);
+      unit.nowPlayingAt ??= new Map();
+      const sentAt = unit.nowPlayingAt.get(zone.id);
+      if (sentAt === undefined || this.now() - sentAt >= HEARTBEAT_MS) {
+        if (sentAt !== undefined) {
+          this.gladys.forgetPublishedStates(ids.device);
+        }
+        unit.nowPlayingAt.set(zone.id, this.now());
+      }
+      const { count } = await this.gladys.publishNowPlaying(ids.device, values);
       musicCount += count;
       const playing = nowPlaying(unit, zoneState, unit.playInfo);
       const widgetKey = JSON.stringify([
@@ -502,6 +517,43 @@ export class Hub {
     if (widgetChanged) {
       this.gladys.requestWidgetRefresh(WIDGET_KEY);
     }
+  }
+
+  /**
+   * A position the device does not give (Spotify Connect says -60000, an old
+   * firmware leaves a live radio at 0): the seconds since this track started
+   * playing here, counted by the integration. A fixed 0 would drift from what
+   * the dashboard extrapolates and be sent again at every read.
+   */
+  positionOf(unit, zone, values) {
+    if (
+      values.position === undefined ||
+      values.playback_state === MUSIC_PLAYBACK_STATE.IDLE ||
+      (values.position !== null && !(values.position === 0 && values.duration === 0))
+    ) {
+      unit.counters?.delete(zone.id);
+      return;
+    }
+    unit.counters ??= new Map();
+    const key = `${values.title}|${values.playback_state}`;
+    let counter = unit.counters.get(zone.id);
+    if (counter?.key !== key) {
+      // A pause freezes the count, a resume goes on from there.
+      const elapsed = counter ? counter.elapsed(this.now()) : 0;
+      const sameTrack = counter?.title === values.title;
+      const start = sameTrack ? elapsed : 0;
+      const at = this.now();
+      counter = {
+        key,
+        title: values.title,
+        elapsed:
+          values.playback_state === MUSIC_PLAYBACK_STATE.PLAYING
+            ? (now) => start + Math.floor((now - at) / 1000)
+            : () => start,
+      };
+      unit.counters.set(zone.id, counter);
+    }
+    values.position = counter.elapsed(this.now());
   }
 
   /**
@@ -642,11 +694,12 @@ export class Hub {
   async listeningZone(deviceExternalId) {
     const found = this.requireZone(deviceExternalId);
     const { unit, zone } = found;
-    if (!unit.zoneStates) {
-      await this.refresh(unit, { force: true }).catch(() => {});
-    }
+    // Read now: the zone may have changed input since the last read.
+    await this.refresh(unit, { force: true }).catch(() => {});
     const zoneState = unit.zoneStates?.get(zone.id);
-    if (!unit.hasNetusb || !zoneState || !isNetworkSource(unit, zoneState.input)) {
+    // On, on a network input, and that input is what the module plays: a zone
+    // in standby or on another source must not stop the music of another one.
+    if (!unit.hasNetusb || !zoneState || !nowPlaying(unit, zoneState, unit.playInfo)) {
       throw new UserError(MESSAGES.notNetworkSource, this.config.language);
     }
     return found;
@@ -725,12 +778,18 @@ export class Hub {
       return;
     }
     for (let i = 0; i < 3; i += 1) {
+      // Give the device time to show the previous toggle, or it would be
+      // toggled past the mode.
+      if (i > 0) {
+        await new Promise((resolve) => setTimeout(resolve, TOGGLE_SETTLE_MS));
+      }
       const info = playInfoOf(await unit.client.playInfo());
       if (reached(info)) {
         return;
       }
       await toggle();
     }
+    await new Promise((resolve) => setTimeout(resolve, TOGGLE_SETTLE_MS));
     if (!reached(playInfoOf(await unit.client.playInfo()))) {
       throw new YxcError(4, `netusb/${name === 'shuffle' ? 'toggleShuffle' : 'toggleRepeat'}`);
     }

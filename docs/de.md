@@ -108,13 +108,13 @@ Titel, Interpret, Album, Fortschrittsbalken, Wiedergabe / Pause / Stopp, Zufalls
 Wiederholung, Stummschaltung und Lautstärke.
 
 - **Was angezeigt wird**: was die Netzwerkquelle der Zone spielt (Spotify, Net Radio, Medienserver,
-  AirPlay, Qobuz...). Bei einem Radiosender ist der Sendername der Titel, bis der Song bekannt ist.
+  AirPlay, Qobuz...). Bei einem Radiosender ist der Sendername der Titel, bis der Song bekannt ist, danach das Album („Interpret - Titel“ des Senders wird in Interpret und Titel geteilt).
   Eine Zone im Standby oder an einem anderen Eingang (HDMI, Tuner...) ist „gestoppt“, ohne Titel
   und ohne Cover.
 - **Cover**: das Bild, das das Gerät liefert (JPEG oder PNG, ab API 1.17; ältere liefern nur ein
   Yamaha-eigenes Format, das nicht angezeigt wird). Ein zu großes Bild verkleinert die Integration.
 - **Position**: Springen im Titel funktioniert nur am Eingang **Server** (Medienserver); die
-  anderen Quellen lehnen es mit einer Meldung ab. Spotify Connect meldet keine Position.
+  anderen Quellen lehnen es mit einer Meldung ab. Meldet das Gerät keine Position (Spotify Connect), zählt die Integration sie ab Titelbeginn.
 - **Zufall und Wiederholung**: soweit die Quelle sie annimmt (die meisten Streamingdienste über
   Spotify Connect haben keine); vor API 1.19 schaltet die Integration den Modus um, bis der
   gewünschte erreicht ist.

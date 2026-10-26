@@ -21,6 +21,7 @@ import {
   lastState,
 } from './helpers/world.js';
 import { parsePresetMediaId } from '../src/music.js';
+import { HEARTBEAT_MS } from '../src/hub.js';
 
 const real = (name) =>
   JSON.parse(readFileSync(new URL(`./fixtures/musiccast/real/${name}.json`, import.meta.url)));
@@ -87,7 +88,7 @@ test('Spotify Connect (real answer): unknown position published as 0, artwork ke
   assert.equal(state('artist'), 'George Harrison');
   assert.equal(state('album'), 'Cloud Nine');
   assert.equal(state('duration'), 0);
-  assert.equal(state('position'), 0, 'play_time -60000 means unknown');
+  assert.equal(state('position'), 0, 'play_time -60000 means unknown: counted from here');
   assert.equal(state('shuffle'), 0);
   assert.equal(state('repeat'), 0);
   const key = state('artwork');
@@ -99,7 +100,7 @@ test('Spotify Connect (real answer): unknown position published as 0, artwork ke
   world.app.stop();
 });
 
-test('Net Radio (real answers): the station is the title until the song is known', async () => {
+test('Net Radio (real answers): the station is the title until the song is known, then the album', async () => {
   const station = await playing('net_radio_station');
   assert.equal(station.state('title'), 'ABC Classic FM 92.9 Sydney');
   assert.equal(station.state('artist'), '');
@@ -107,8 +108,10 @@ test('Net Radio (real answers): the station is the title until the song is known
   station.world.app.stop();
 
   const song = await playing('net_radio_song');
-  assert.equal(song.state('title'), 'Avec - Home');
-  assert.equal(song.state('artist'), 'Hitradio Ö3 (Vienna/German)');
+  // "Avec - Home": artist and title; the station as the show (album).
+  assert.equal(song.state('title'), 'Home');
+  assert.equal(song.state('artist'), 'Avec');
+  assert.equal(song.state('album'), 'Hitradio Ö3 (Vienna/German)');
   assert.match(song.state('artwork'), /^art-/, 'a PNG of the device');
   assert.equal(song.state('position'), 177);
   song.world.app.stop();
@@ -270,5 +273,82 @@ test('the artwork is served by the device, a large one made smaller', async () =
   const large = await world.fake.musicGetArtwork(world.gladys.artworkKey(`${url}#large`));
   assert.equal(large.success, true);
   assert.deepEqual(validateWidgetImage(large.data.image), []);
+  world.app.stop();
+});
+
+test('an unknown position is counted here, never sent again at every read', async (t) => {
+  // The SDK extrapolates with Date.now(): move it with the manual clock.
+  t.mock.timers.enable({ apis: ['Date'], now: Date.now() });
+  const { world, salon, device } = await playing('spotify');
+  const positions = () =>
+    world.fake.states.filter((s) => s.device_feature_external_id === featureId(salon, 'position'));
+  const sent = positions().length;
+  for (let i = 0; i < 12; i += 1) {
+    t.mock.timers.tick(5000);
+    world.clock.advance(5000);
+    await world.hub.refresh([...world.hub.units.values()][0], { force: true });
+  }
+  assert.equal(positions().length, sent, '60 s of Spotify Connect: no new position');
+  // A pause freezes it, at the count reached.
+  device.playInfo.playback = 'pause';
+  await world.hub.refresh([...world.hub.units.values()][0], { force: true });
+  assert.equal(lastState(world, salon, 'position'), 60);
+  world.app.stop();
+});
+
+test('a zone in standby on the same network input does not drive the shared module', async () => {
+  const world = await createWorld({ config: { language: 'en' } });
+  const salon = await create(world, 'Salon');
+  const cuisine = await create(world, 'Salon Cuisine');
+  world.network.devices[RECEIVER].zones.zone2.input = 'spotify'; // in standby
+  const sent = world.network.commands.length;
+  for (const [key, value] of [
+    ['playback_state', 2],
+    ['shuffle', 1],
+    ['repeat', 1],
+    ['position', 10],
+  ]) {
+    const answer = await setValue(world, cuisine, key, value);
+    assert.equal(answer.success, false, key);
+    assert.match(answer.error, /network source/);
+  }
+  assert.equal(world.network.commands.length, sent, 'nothing sent');
+  assert.equal(lastState(world, salon, 'playback_state'), 1, 'the main zone still plays');
+  world.app.stop();
+});
+
+test('the music values are sent again every 6 hours, like the other states', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: Date.now() });
+  const world = await createWorld();
+  const salon = await create(world, 'Salon');
+  world.network.devices[RECEIVER].playInfo.playback = 'pause';
+  const step = async (ms) => {
+    t.mock.timers.tick(ms);
+    world.clock.advance(ms);
+    await world.hub.tick();
+  };
+  await step(5000);
+  const titles = () =>
+    world.fake.states.filter((s) => s.device_feature_external_id === featureId(salon, 'title'))
+      .length;
+  const before = titles();
+  for (let elapsed = 0; elapsed <= HEARTBEAT_MS; elapsed += 5 * 60 * 1000) {
+    await step(5 * 60 * 1000);
+  }
+  assert.equal(titles(), before + 1);
+  world.app.stop();
+});
+
+test('a favorite gone from its slot is never replaced by another one', async () => {
+  const world = await createWorld();
+  const cuisine = await create(world, 'Salon Cuisine');
+  const { items } = (await world.fake.musicBrowse(cuisine)).data;
+  const presets = world.network.devices[RECEIVER].presets.preset_info;
+  presets[0] = { input: 'net_radio', text: 'Radio Exemple (nouveau nom)' };
+  assert.equal((await world.fake.musicPlay(cuisine, items[0])).success, true, 'renamed: same slot');
+  presets[0] = { input: 'spotify', text: 'Something else' };
+  const sent = world.network.commands.length;
+  assert.equal((await world.fake.musicPlay(cuisine, items[0])).success, false);
+  assert.equal(world.network.commands.length, sent);
   world.app.stop();
 });

@@ -111,14 +111,14 @@ répétition, sourdine et volume.
 
 - **Ce qui est affiché** : ce que joue la source réseau de la zone (Spotify, Net Radio, serveur
   multimédia, AirPlay, Qobuz...). Sur une radio, le nom de la station sert de titre tant que le
-  morceau n'est pas connu. Une zone en veille ou sur une autre entrée (HDMI, tuner...) est « à
+  morceau n'est pas connu, puis d'album (« Artiste - Titre » de la radio découpé en artiste et titre). Une zone en veille ou sur une autre entrée (HDMI, tuner...) est « à
   l'arrêt », sans titre ni pochette.
 - **Pochette** : l'image que l'appareil fournit (JPEG ou PNG, à partir de l'API 1.17 ; les plus
   anciens n'en donnent qu'un format propre à Yamaha, non affiché). Une image trop lourde est
   réduite par l'intégration.
 - **Position** : se déplacer dans le morceau ne marche qu'avec l'entrée **Server** (serveur
-  multimédia) ; les autres sources le refusent avec un message. Spotify Connect ne donne pas la
-  position.
+  multimédia) ; les autres sources le refusent avec un message. Quand l'appareil ne donne pas la
+  position (Spotify Connect), l'intégration la compte depuis le début du morceau.
 - **Aléatoire et répétition** : selon ce que la source accepte (la plupart des services de
   streaming en Spotify Connect n'en ont pas) ; avant l'API 1.19, l'intégration bascule le mode
   jusqu'à atteindre celui demandé.

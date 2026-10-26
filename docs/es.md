@@ -111,13 +111,13 @@ repetición, silencio y volumen.
 
 - **Lo que se muestra**: lo que reproduce la fuente de red de la zona (Spotify, Net Radio, servidor
   multimedia, AirPlay, Qobuz...). En una radio, el nombre de la emisora es el título mientras no se
-  conozca la canción. Una zona en espera o en otra entrada (HDMI, sintonizador...) está «detenida»,
+  conozca la canción, y luego el álbum (el «Artista - Título» de la radio se separa en artista y título). Una zona en espera o en otra entrada (HDMI, sintonizador...) está «detenida»,
   sin título ni carátula.
 - **Carátula**: la imagen que da el dispositivo (JPEG o PNG, desde la API 1.17; los más antiguos
   solo dan un formato propio de Yamaha, que no se muestra). Una imagen demasiado pesada la reduce
   la integración.
 - **Posición**: moverse dentro de la pista solo funciona en la entrada **Server** (servidor
-  multimedia); las demás fuentes lo rechazan con un mensaje. Spotify Connect no da la posición.
+  multimedia); las demás fuentes lo rechazan con un mensaje. Cuando el dispositivo no da la posición (Spotify Connect), la integración la cuenta desde el inicio de la pista.
 - **Aleatorio y repetición**: según lo que acepte la fuente (la mayoría de los servicios en Spotify
   Connect no los tienen); antes de la API 1.19, la integración cambia el modo hasta llegar al
   pedido.

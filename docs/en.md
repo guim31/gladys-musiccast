@@ -106,12 +106,12 @@ Since version 1.1.0, each zone is a real player of the Gladys 5.3 **Music** widg
 title, artist, album, progress bar, play / pause / stop, shuffle, repeat, mute and volume.
 
 - **What is shown**: what the zone's network source plays (Spotify, Net Radio, media server,
-  AirPlay, Qobuz...). On a radio, the station name is the title until the song is known. A zone in
+  AirPlay, Qobuz...). On a radio, the station name is the title until the song is known, then the album (the radio's "Artist - Title" split into artist and title). A zone in
   standby or on another input (HDMI, tuner...) is "stopped", with no title and no artwork.
 - **Artwork**: the image the device provides (JPEG or PNG, from API 1.17; older ones only give a
   Yamaha format, not shown). An image that is too heavy is made smaller by the integration.
 - **Position**: jumping within the track only works on the **Server** input (media server); the
-  other sources refuse it with a message. Spotify Connect does not report the position.
+  other sources refuse it with a message. When the device does not report the position (Spotify Connect), the integration counts it from the start of the track.
 - **Shuffle and repeat**: as far as the source accepts them (most streaming services in Spotify
   Connect have none); before API 1.19, the integration toggles the mode until it reaches the one
   asked for.
