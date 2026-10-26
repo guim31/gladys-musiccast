@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-26
+
 ### Added
 
 - Gladys 5.3 Music player: each zone shows the artwork, title, artist, album,
@@ -54,5 +56,6 @@ the notes of the version's GitHub Release.
 - "Search for MusicCast devices" button on the configuration page.
 - Texts and documentation in English, French, German and Spanish.
 
-[Unreleased]: https://github.com/guim31/gladys-musiccast/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/guim31/gladys-musiccast/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/guim31/gladys-musiccast/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/guim31/gladys-musiccast/releases/tag/v1.0.1
