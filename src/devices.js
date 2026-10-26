@@ -3,17 +3,17 @@
 // user powers, turns up and switches input independently.
 //
 // Couples chosen among those the Gladys front knows (test/gladys-rules.test.js):
-// - power, mute: switch/binary, a toggle with its state (the television
-//   "mute" is a push button that cannot show whether the sound is cut);
-// - volume, play, pause, previous, next, playback_state: the `music`
-//   category, the one the core's "Music" dashboard box reads (it needs the
-//   six of them, with a 0-100 volume slider), like gladys-dlna. The volume is
-//   therefore published in percent of the zone's range, not in raw steps;
+// - power: switch/binary, a toggle with its state;
+// - volume, mute, play, pause, previous, next, playback_state and, since
+//   1.1.0, the "now playing" of Gladys 5.3 (title, artist, album, artwork,
+//   duration, position, shuffle, repeat): the `music` category, the one the
+//   core's Music player reads. The volume is published in percent of the
+//   zone's range (the player's slider is 0-100), not in raw steps. Mute was a
+//   switch/binary in 1.0: same id, converted by "Update" in Discovery;
 // - input, sound mode, preset: text/select, the dynamic select of Gladys 5.2
 //   whose options the integration declares per device (`supported_options`,
 //   string values: the input ids of the device, `hdmi1`, `spotify`...);
-// - title, artist, album: text/text (three of them: the dashboard shows
-//   their names).
+// - title, artist, album were text/text in 1.0: same ids, now music/*.
 //
 // The playback features exist only on a device with a network module
 // (`netusb`), shared by all its zones. Feature keys are part of the external
@@ -21,13 +21,15 @@
 // -----------------------------------------------------------------------------
 
 import {
+  MUSIC_PLAYBACK_STATE,
+  MUSIC_REPEAT_MODE,
   DEVICE_FEATURE_CATEGORIES as CAT,
   DEVICE_FEATURE_TYPES as TYPE,
   DEVICE_FEATURE_UNITS as UNIT,
   DEVICE_POLL_FREQUENCIES,
 } from '@gladysassistant/integration-sdk';
 import { NAMES } from './i18n.js';
-import { isNetworkSource, volumeToPercent } from './yxc/model.js';
+import { MAX_SECONDS, artworkUrlOf, isNetworkSource, volumeToPercent } from './yxc/model.js';
 
 export const DEVICE_TYPE = 'zone';
 
@@ -46,6 +48,11 @@ export const FEATURES = {
   TITLE: 'title',
   ARTIST: 'artist',
   ALBUM: 'album',
+  ARTWORK: 'artwork',
+  DURATION: 'duration',
+  POSITION: 'position',
+  SHUFFLE: 'shuffle',
+  REPEAT: 'repeat',
 };
 
 // The playback buttons and the netusb command each one sends.
@@ -56,10 +63,21 @@ export const PLAYBACK_COMMANDS = {
   [FEATURES.NEXT]: 'next',
 };
 
-// MUSIC_PLAYBACK_STATE of the core: 1 playing, 0 anything else.
-export const PLAYBACK_STATE = { PLAYING: 1, NOT_PLAYING: 0 };
+// playback_state written by Gladys → netusb/setPlayback.
+export const PLAYBACK_STATE_COMMANDS = {
+  [MUSIC_PLAYBACK_STATE.PAUSED]: 'pause',
+  [MUSIC_PLAYBACK_STATE.PLAYING]: 'play',
+  [MUSIC_PLAYBACK_STATE.IDLE]: 'stop',
+};
 
-// A text state is never empty, or the core ignores it.
+// netusb `repeat` ↔ MUSIC_REPEAT_MODE.
+export const REPEAT_MODES = {
+  off: MUSIC_REPEAT_MODE.OFF,
+  all: MUSIC_REPEAT_MODE.ALL,
+  one: MUSIC_REPEAT_MODE.ONE,
+};
+
+// A text state is never empty, or the core ignores it (input, sound mode).
 export const NOTHING = '—';
 
 // The core polls only at these paces; the container refreshes by itself
@@ -78,7 +96,8 @@ export function zoneDeviceName(unit, zone) {
 
 const toggle = { category: CAT.SWITCH, type: TYPE.SWITCH.BINARY, min: 0, max: 1 };
 const button = (type) => ({ category: CAT.MUSIC, type, min: 0, max: 1, has_feedback: false });
-const text = { category: CAT.TEXT, type: TYPE.TEXT.TEXT, min: 0, max: 0, read_only: true };
+const music = (type, min, max, fields = {}) => ({ category: CAT.MUSIC, type, min, max, ...fields });
+const shown = { read_only: true, has_feedback: false };
 const select = (options) => ({
   category: CAT.TEXT,
   type: TYPE.TEXT.SELECT,
@@ -138,7 +157,7 @@ export function buildZoneDevice(gladys, unit, zone, language) {
     });
   }
   if (zone.hasMute) {
-    add(FEATURES.MUTE, toggle);
+    add(FEATURES.MUTE, music(TYPE.MUSIC.MUTE, 0, 1));
   }
   add(FEATURES.INPUT, select(inputOptions(unit, zone)));
   if (zone.soundPrograms.length > 0) {
@@ -157,18 +176,21 @@ export function buildZoneDevice(gladys, unit, zone, language) {
     add(FEATURES.PAUSE, button(TYPE.MUSIC.PAUSE));
     add(FEATURES.PREVIOUS, button(TYPE.MUSIC.PREVIOUS));
     add(FEATURES.NEXT, button(TYPE.MUSIC.NEXT));
-    add(FEATURES.PLAYBACK_STATE, {
-      category: CAT.MUSIC,
-      type: TYPE.MUSIC.PLAYBACK_STATE,
-      min: 0,
-      max: 1,
-      read_only: true,
-      has_feedback: false,
-      keep_history: true,
-    });
-    add(FEATURES.TITLE, text);
-    add(FEATURES.ARTIST, text);
-    add(FEATURES.ALBUM, text);
+    // Writable since 1.1.0: 0 pause, 1 play, 2 stop (IDLE).
+    add(FEATURES.PLAYBACK_STATE, music(TYPE.MUSIC.PLAYBACK_STATE, 0, 2));
+    add(FEATURES.TITLE, music(TYPE.MUSIC.TITLE, 0, 0, shown));
+    add(FEATURES.ARTIST, music(TYPE.MUSIC.ARTIST, 0, 0, shown));
+    add(FEATURES.ALBUM, music(TYPE.MUSIC.ALBUM, 0, 0, shown));
+    add(FEATURES.ARTWORK, music(TYPE.MUSIC.ARTWORK, 0, 0, shown));
+    add(
+      FEATURES.DURATION,
+      music(TYPE.MUSIC.DURATION, 0, MAX_SECONDS, { ...shown, unit: UNIT.SECONDS }),
+    );
+    // A seek (netusb/setPlayPosition): the media server input only, the
+    // others refuse it with a message.
+    add(FEATURES.POSITION, music(TYPE.MUSIC.POSITION, 0, MAX_SECONDS, { unit: UNIT.SECONDS }));
+    add(FEATURES.SHUFFLE, music(TYPE.MUSIC.SHUFFLE, 0, 1));
+    add(FEATURES.REPEAT, music(TYPE.MUSIC.REPEAT, 0, 2));
   }
 
   return {
@@ -203,30 +225,24 @@ export function nowPlaying(unit, zoneState, playInfo) {
 }
 
 /**
- * The feature states of a zone, in the publishStates format.
+ * The states of a zone that are not `music` (power, input, sound mode,
+ * preset), in the publishStates format.
  * @param {object} ids from zoneIds
  * @param {object} unit
  * @param {object} zone
  * @param {object} zoneState from zoneStateOf
- * @param {object|null} playInfo from playInfoOf (null without netusb)
  * @param {number|null} lastPreset the preset last recalled from Gladys on this zone
  */
-export function buildZoneStates(ids, unit, zone, zoneState, playInfo, lastPreset = null) {
+export function buildZoneStates(ids, unit, zone, zoneState, lastPreset = null) {
   const states = [];
-  const number = (key, state) =>
-    states.push({ device_feature_external_id: ids.feature(key), state });
   const label = (key, value) =>
     states.push({ device_feature_external_id: ids.feature(key), text: value || NOTHING });
 
   if (zone.hasPower) {
-    number(FEATURES.POWER, zoneState.power ? 1 : 0);
-  }
-  const percent = volumeToPercent(zoneState.volume, zone.volume);
-  if (zone.volume && percent !== null) {
-    number(FEATURES.VOLUME, percent);
-  }
-  if (zone.hasMute) {
-    number(FEATURES.MUTE, zoneState.mute ? 1 : 0);
+    states.push({
+      device_feature_external_id: ids.feature(FEATURES.POWER),
+      state: zoneState.power ? 1 : 0,
+    });
   }
   if (zoneState.input) {
     label(FEATURES.INPUT, zoneState.input);
@@ -234,20 +250,72 @@ export function buildZoneStates(ids, unit, zone, zoneState, playInfo, lastPreset
   if (zone.soundPrograms.length > 0 && zoneState.soundProgram) {
     label(FEATURES.SOUND_PROGRAM, zoneState.soundProgram);
   }
-  if (unit.hasNetusb) {
-    if (unit.presetSlots > 0 && lastPreset !== null) {
-      label(FEATURES.PRESET, String(lastPreset));
-    }
-    const playing = nowPlaying(unit, zoneState, playInfo);
-    number(
-      FEATURES.PLAYBACK_STATE,
-      playing?.playing ? PLAYBACK_STATE.PLAYING : PLAYBACK_STATE.NOT_PLAYING,
-    );
-    label(FEATURES.TITLE, playing?.track);
-    label(FEATURES.ARTIST, playing?.artist);
-    label(FEATURES.ALBUM, playing?.album);
+  if (unit.hasNetusb && unit.presetSlots > 0 && lastPreset !== null) {
+    label(FEATURES.PRESET, String(lastPreset));
   }
   return states;
+}
+
+/**
+ * The `music` states of a zone, for publishNowPlaying (which diffs them):
+ * volume and mute always, the "now playing" on a device with a network
+ * module. A zone that is off or listens to another input (HDMI, tuner) plays
+ * nothing: IDLE, the texts and the artwork cleared.
+ * @param {object} unit
+ * @param {object} zone
+ * @param {object} zoneState from zoneStateOf
+ * @param {object|null} playInfo from playInfoOf
+ */
+export function buildNowPlaying(unit, zone, zoneState, playInfo) {
+  const values = {};
+  const percent = volumeToPercent(zoneState.volume, zone.volume);
+  if (zone.volume && percent !== null) {
+    values.volume = percent;
+  }
+  if (zone.hasMute) {
+    values.mute = zoneState.mute ? 1 : 0;
+  }
+  if (!unit.hasNetusb) {
+    return values;
+  }
+  const playing = nowPlaying(unit, zoneState, playInfo);
+  if (!playing) {
+    return {
+      ...values,
+      playback_state: MUSIC_PLAYBACK_STATE.IDLE,
+      title: '',
+      artist: '',
+      album: '',
+      artwork_url: null,
+      duration: 0,
+      position: 0,
+    };
+  }
+  const state =
+    playing.playback === 'pause'
+      ? MUSIC_PLAYBACK_STATE.PAUSED
+      : playing.playback === 'stop'
+        ? MUSIC_PLAYBACK_STATE.IDLE
+        : MUSIC_PLAYBACK_STATE.PLAYING; // play, fast forward / reverse
+  // A radio gives its station in `artist` and the song, when it knows it,
+  // in `track` ("Artist - Title"): the station is the title until then.
+  const radioName = !playing.track && playing.artist && playing.input === 'net_radio';
+  Object.assign(values, {
+    playback_state: state,
+    title: radioName ? playing.artist : playing.track,
+    artist: radioName ? '' : playing.artist,
+    album: playing.album,
+    artwork_url: artworkUrlOf(unit.host, playing),
+    duration: playing.totalTime,
+    position: state === MUSIC_PLAYBACK_STATE.IDLE ? 0 : playing.playTime,
+  });
+  if (playing.shuffle !== null) {
+    values.shuffle = playing.shuffle === 'off' ? 0 : 1;
+  }
+  if (REPEAT_MODES[playing.repeat] !== undefined) {
+    values.repeat = REPEAT_MODES[playing.repeat];
+  }
+  return values;
 }
 
 /** The feature key of one of our feature external_ids, or null. */

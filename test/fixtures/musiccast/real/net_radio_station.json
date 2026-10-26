@@ -1,0 +1,17 @@
+{
+  "response_code": 0,
+  "input": "net_radio",
+  "playback": "play",
+  "repeat": "off",
+  "shuffle": "off",
+  "play_time": 0,
+  "total_time": 0,
+  "artist": "ABC Classic FM 92.9 Sydney",
+  "album": "",
+  "track": "",
+  "albumart_url": "",
+  "albumart_id": 16,
+  "usb_devicetype": "unknown",
+  "auto_stopped": false,
+  "attribute": 16785411
+}

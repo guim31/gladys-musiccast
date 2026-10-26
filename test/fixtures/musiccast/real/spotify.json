@@ -1,0 +1,20 @@
+{
+  "response_code": 0,
+  "input": "spotify",
+  "play_queue_type": "system",
+  "playback": "play",
+  "repeat": "off",
+  "shuffle": "off",
+  "play_time": -60000,
+  "total_time": 0,
+  "artist": "George Harrison",
+  "album": "Cloud Nine",
+  "track": "Got My Mind Set On You - Extended Version",
+  "albumart_url": "/YamahaRemoteControl/AlbumART/AlbumART7781.jpg",
+  "albumart_id": 7781,
+  "usb_devicetype": "unknown",
+  "auto_stopped": false,
+  "attribute": 16777631,
+  "repeat_available": [],
+  "shuffle_available": []
+}

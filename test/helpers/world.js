@@ -60,9 +60,11 @@ export function createNetwork(devices = { [RECEIVER]: 'receiver', [SPEAKER]: 'sp
     ),
     offline: new Set(),
     requests: [],
+    /** Other files served on the network (artwork), by URL: a Buffer. */
+    files: {},
     /** Commands (set*, recall*) received, as "address path?query". */
     get commands() {
-      return network.requests.filter((r) => /\/(set|recall)/.test(r));
+      return network.requests.filter((r) => /\/(set|recall|toggle)/.test(r));
     },
     async fetch(url) {
       const parsed = new URL(url);
@@ -72,6 +74,11 @@ export function createNetwork(devices = { [RECEIVER]: 'receiver', [SPEAKER]: 'sp
       }
       if (DESCRIPTIONS[url] !== undefined && !network.offline.has(address)) {
         return { ok: true, status: 200, text: async () => DESCRIPTIONS[url] };
+      }
+      if (network.files[url] !== undefined) {
+        network.requests.push(`${address} ${parsed.pathname}`);
+        const bytes = network.files[url];
+        return { ok: true, status: 200, body: [new Uint8Array(bytes)] };
       }
       const device = network.devices[address];
       const prefix = '/YamahaExtendedControl/v1/';
@@ -116,6 +123,34 @@ function answer(device, path, query) {
       } else {
         device.playInfo.playback = playback;
       }
+      return ok({ response_code: 0 });
+    }
+    case 'netusb/setPlayPosition':
+      // The media server input only (YXC Advanced).
+      if (device.playInfo.input !== 'server') {
+        return refused(3);
+      }
+      device.playInfo.play_time = Number(query.position);
+      return ok({ response_code: 0 });
+    case 'netusb/setShuffle':
+    case 'netusb/setRepeat': {
+      if ((device.deviceInfo.api_version ?? 0) < 1.19) {
+        return refused(3);
+      }
+      const key = method === 'setShuffle' ? 'shuffle' : 'repeat';
+      const available = device.playInfo[`${key}_available`];
+      if (Array.isArray(available) && !available.includes(query.mode)) {
+        return refused(4);
+      }
+      device.playInfo[key] = query.mode;
+      return ok({ response_code: 0 });
+    }
+    case 'netusb/toggleShuffle':
+      device.playInfo.shuffle = device.playInfo.shuffle === 'off' ? 'on' : 'off';
+      return ok({ response_code: 0 });
+    case 'netusb/toggleRepeat': {
+      const order = ['off', 'one', 'all'];
+      device.playInfo.repeat = order[(order.indexOf(device.playInfo.repeat) + 1) % 3];
       return ok({ response_code: 0 });
     }
     case 'netusb/recallPreset': {

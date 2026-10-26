@@ -10,6 +10,24 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+### Added
+
+- Gladys 5.3 Music player: each zone shows the artwork, title, artist, album,
+  duration and position of what its network source plays, with play / pause /
+  stop, seek (media server input), shuffle, repeat, mute and volume.
+- The device's presets in the player's catalog panel, played on the zone (also
+  through the `music.play-media` scene action).
+
+### Changed
+
+- Requires Gladys 5.3.0 (SDK 0.16.0).
+- Mute, Title, Artist and Album become music features, with the same ids: open
+  the Discovery tab and click **Update** on each zone added with 1.0.
+- Playback state is writable (0 pause, 1 play, 2 stop) and is now 2 (IDLE)
+  when nothing plays (standby, HDMI, tuner, stopped), no longer 0: a scene
+  "playback state = 0" no longer fires on a stop. Nothing loaded clears the
+  texts (empty instead of "—").
+
 ## [1.0.1] - 2026-10-13
 
 ### Added

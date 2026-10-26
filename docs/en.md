@@ -30,7 +30,7 @@ Corporation.
 
 ## Requirements
 
-- Gladys 5.1.0 or later.
+- Gladys 5.3.0 or later (Music player).
 - A Yamaha device with MusicCast (it appears in the MusicCast app), on the same local network as
   Gladys.
 - To control a device in standby, enable **Network Standby** on it (the "Network" settings of
@@ -69,25 +69,24 @@ are read regularly.
 
 ### Features of a zone
 
-| Feature              | Type in Gladys         | Notes                                                                                     |
-| -------------------- | ---------------------- | ----------------------------------------------------------------------------------------- |
-| Power                | On/off switch          | On / standby.                                                                             |
-| Volume               | Music volume (0-100 %) | Percent of the zone's range (0 to 161 steps on a receiver, 0 to 60 on a speaker...).      |
-| Mute                 | On/off switch          |                                                                                           |
-| Input                | Selection              | The inputs of the zone, with the names given on the device.                               |
-| Sound mode           | Selection              | Only on the zones with sound programs (receivers, soundbars).                             |
-| Preset               | Selection              | Recalls a stored preset; shows the last one recalled from Gladys until the input changes. |
-| Play, Pause          | Music buttons          | Network sources only. Pause stops a live radio.                                           |
-| Previous, Next       | Music buttons          | Network sources only.                                                                     |
-| Playback state       | Music playback state   | Playing / not playing.                                                                    |
-| Title, Artist, Album | Text                   | What a network source plays; "—" otherwise.                                               |
+| Feature              | Type in Gladys             | Notes                                                                                                  |
+| -------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Power                | On/off switch              | On / standby.                                                                                          |
+| Volume               | Music volume (0-100 %)     | Percent of the zone's range (0 to 161 steps on a receiver, 0 to 60 on a speaker...).                   |
+| Mute                 | Mute (music)               |                                                                                                        |
+| Input                | Selection                  | The inputs of the zone, with the names given on the device.                                            |
+| Sound mode           | Selection                  | Only on the zones with sound programs (receivers, soundbars).                                          |
+| Preset               | Selection                  | Recalls a stored preset; shows the last one recalled from Gladys until the input changes.              |
+| Play, Pause          | Music buttons              | Network sources only. Pause stops a live radio.                                                        |
+| Previous, Next       | Music buttons              | Network sources only.                                                                                  |
+| Playback state       | Music playback state       | Paused (0) / playing (1) / stopped (2); controllable.                                                  |
+| Title, Artist, Album | Music title, artist, album | What a network source plays; empty otherwise. Artwork, duration, position, shuffle, repeat: see below. |
 
 The playback features exist only on devices with a network module, which all the zones of a
 device share: on a zone listening to another input (HDMI, tuner...), the playback buttons are
 refused so that they do not pause the music of another zone.
 
-The zones also work with the **Music** box of the Gladys dashboard (play, pause, previous, next
-and volume).
+Each zone is a player of the Gladys **Music** widget: see the next section.
 
 ### Refresh
 
@@ -100,6 +99,30 @@ MusicCast app reads the devices at a similar pace. The presets are read again ev
 
 Only the values that changed are sent to Gladys, plus a reminder every 6 hours so that a stable
 value never shows as outdated.
+
+## Gladys 5.3 Music player
+
+Since version 1.1.0, each zone is a real player of the Gladys 5.3 **Music** widget: artwork,
+title, artist, album, progress bar, play / pause / stop, shuffle, repeat, mute and volume.
+
+- **What is shown**: what the zone's network source plays (Spotify, Net Radio, media server,
+  AirPlay, Qobuz...). On a radio, the station name is the title until the song is known. A zone in
+  standby or on another input (HDMI, tuner...) is "stopped", with no title and no artwork.
+- **Artwork**: the image the device provides (JPEG or PNG, from API 1.17; older ones only give a
+  Yamaha format, not shown). An image that is too heavy is made smaller by the integration.
+- **Position**: jumping within the track only works on the **Server** input (media server); the
+  other sources refuse it with a message. Spotify Connect does not report the position.
+- **Shuffle and repeat**: as far as the source accepts them (most streaming services in Spotify
+  Connect have none); before API 1.19, the integration toggles the mode until it reaches the one
+  asked for.
+- **Browse**: the player panel lists the device's **presets**; choosing one starts it on the zone
+  (which turns on). The menus of the services (Spotify, Net Radio...) are not offered: the device
+  has a single browsing cursor per source, shared with the MusicCast app. No search, no queue.
+- **Zones added with 1.0**: open the **Discover** tab of the integration and click **Update** for
+  each zone. The ids do not change: scenes and dashboards keep working; Mute, Title, Artist and
+  Album become music features. When stopped, the playback state is now 2 (no longer 0): a scene
+  "playback state = 0" no longer fires on a stop.
+- The integration's own **MusicCast** widget is still there (input, sound mode, power).
 
 ## Dashboard widget
 

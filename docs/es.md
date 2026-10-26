@@ -31,7 +31,7 @@ Corporation.
 
 ## Requisitos
 
-- Gladys 5.1.0 o posterior.
+- Gladys 5.3.0 o posterior (reproductor Música).
 - Un dispositivo Yamaha con MusicCast (aparece en la aplicación MusicCast), en la misma red local
   que Gladys.
 - Para controlar un dispositivo en espera, active su **Network Standby** (ajustes de «Red» del
@@ -71,25 +71,24 @@ añadidas a Gladys.
 
 ### Funciones de una zona
 
-| Función                | Tipo en Gladys                   | Notas                                                                                                 |
-| ---------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Encendido              | Interruptor                      | Encendido / en espera.                                                                                |
-| Volumen                | Volumen de música (0-100 %)      | Porcentaje del rango de la zona (0 a 161 pasos en un receptor, 0 a 60 en un altavoz...).              |
-| Silencio               | Interruptor                      |                                                                                                       |
-| Entrada                | Selección                        | Las entradas de la zona, con los nombres dados en el dispositivo.                                     |
-| Modo de sonido         | Selección                        | Solo en las zonas con programas de sonido (receptores, barras de sonido).                             |
-| Favorito               | Selección                        | Recupera un favorito guardado; muestra el último recuperado desde Gladys hasta que cambie la entrada. |
-| Reproducir, Pausa      | Botones de música                | Solo fuentes de red. Pausa detiene una radio en directo.                                              |
-| Anterior, Siguiente    | Botones de música                | Solo fuentes de red.                                                                                  |
-| Estado de reproducción | Estado de reproducción de música | Reproduciendo / detenido.                                                                             |
-| Título, Artista, Álbum | Texto                            | Lo que reproduce una fuente de red; «—» en otro caso.                                                 |
+| Función                | Tipo en Gladys                   | Notas                                                                                                                       |
+| ---------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Encendido              | Interruptor                      | Encendido / en espera.                                                                                                      |
+| Volumen                | Volumen de música (0-100 %)      | Porcentaje del rango de la zona (0 a 161 pasos en un receptor, 0 a 60 en un altavoz...).                                    |
+| Silencio               | Silencio (música)                |                                                                                                                             |
+| Entrada                | Selección                        | Las entradas de la zona, con los nombres dados en el dispositivo.                                                           |
+| Modo de sonido         | Selección                        | Solo en las zonas con programas de sonido (receptores, barras de sonido).                                                   |
+| Favorito               | Selección                        | Recupera un favorito guardado; muestra el último recuperado desde Gladys hasta que cambie la entrada.                       |
+| Reproducir, Pausa      | Botones de música                | Solo fuentes de red. Pausa detiene una radio en directo.                                                                    |
+| Anterior, Siguiente    | Botones de música                | Solo fuentes de red.                                                                                                        |
+| Estado de reproducción | Estado de reproducción de música | En pausa (0) / reproduciendo (1) / detenido (2); controlable.                                                               |
+| Título, Artista, Álbum | Título, artista, álbum (música)  | Lo que reproduce una fuente de red; vacío en otro caso. Carátula, duración, posición, aleatorio, repetición: ver más abajo. |
 
 Las funciones de reproducción solo existen en los dispositivos con módulo de red, que comparten
 todas las zonas de un dispositivo: en una zona que escucha otra entrada (HDMI, sintonizador...),
 los botones de reproducción se rechazan para no pausar la música de otra zona.
 
-Las zonas también funcionan con el cuadro **Música** del panel de Gladys (reproducir, pausa,
-anterior, siguiente y volumen).
+Cada zona es un reproductor del widget **Música** de Gladys: vea la sección siguiente.
 
 ### Actualización
 
@@ -103,6 +102,36 @@ se vuelven a leer cada 5 minutos.
 
 Solo se envían a Gladys los valores que cambiaron, más un recordatorio cada 6 horas para que un
 valor estable nunca parezca caducado.
+
+## Reproductor Música de Gladys 5.3
+
+Desde la versión 1.1.0, cada zona es un verdadero reproductor del widget **Música** de Gladys 5.3:
+carátula, título, artista, álbum, barra de progreso, reproducir / pausa / detener, aleatorio,
+repetición, silencio y volumen.
+
+- **Lo que se muestra**: lo que reproduce la fuente de red de la zona (Spotify, Net Radio, servidor
+  multimedia, AirPlay, Qobuz...). En una radio, el nombre de la emisora es el título mientras no se
+  conozca la canción. Una zona en espera o en otra entrada (HDMI, sintonizador...) está «detenida»,
+  sin título ni carátula.
+- **Carátula**: la imagen que da el dispositivo (JPEG o PNG, desde la API 1.17; los más antiguos
+  solo dan un formato propio de Yamaha, que no se muestra). Una imagen demasiado pesada la reduce
+  la integración.
+- **Posición**: moverse dentro de la pista solo funciona en la entrada **Server** (servidor
+  multimedia); las demás fuentes lo rechazan con un mensaje. Spotify Connect no da la posición.
+- **Aleatorio y repetición**: según lo que acepte la fuente (la mayoría de los servicios en Spotify
+  Connect no los tienen); antes de la API 1.19, la integración cambia el modo hasta llegar al
+  pedido.
+- **Explorar**: el panel del reproductor lista los **favoritos** del dispositivo; elegir uno lo
+  inicia en la zona (que se enciende). Los menús de los servicios (Spotify, Net Radio...) no se
+  ofrecen: el dispositivo solo tiene un cursor de navegación por fuente, compartido con la app
+  MusicCast. Ni búsqueda ni cola.
+- **Zonas añadidas con la 1.0**: abra la pestaña **Descubrir** de la integración y haga clic en
+  **Actualizar** para cada zona. Los identificadores no cambian: escenas y paneles siguen
+  funcionando; Silencio, Título, Artista y Álbum pasan a ser funcionalidades de música. Detenido,
+  el estado de reproducción vale ahora 2 (ya no 0): una escena «estado de reproducción = 0» ya no
+  se dispara con una parada.
+- El widget **MusicCast** propio de la integración sigue disponible (entrada, modo de sonido,
+  encendido).
 
 ## Widget del panel
 

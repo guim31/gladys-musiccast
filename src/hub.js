@@ -24,6 +24,9 @@ import {
   CORE_POLL_FREQUENCY,
   FEATURES,
   PLAYBACK_COMMANDS,
+  PLAYBACK_STATE_COMMANDS,
+  REPEAT_MODES,
+  buildNowPlaying,
   buildZoneDevice,
   buildZoneStates,
   featureKeyOf,
@@ -452,6 +455,7 @@ export class Hub {
 
   async publish(unit, zones) {
     const states = [];
+    let musicCount = 0;
     let widgetChanged = false;
     unit.widgetKeys ??= new Map();
     unit.lastPresets ??= new Map();
@@ -466,15 +470,15 @@ export class Hub {
         unit.lastPresets.delete(zone.id);
       }
       states.push(
-        ...buildZoneStates(
-          ids,
-          unit,
-          zone,
-          zoneState,
-          unit.playInfo,
-          unit.lastPresets.get(zone.id)?.num ?? null,
-        ),
+        ...buildZoneStates(ids, unit, zone, zoneState, unit.lastPresets.get(zone.id)?.num ?? null),
       );
+      // One channel per feature: the music ones through publishNowPlaying,
+      // which diffs them and samples the position.
+      const { count } = await this.gladys.publishNowPlaying(
+        ids.device,
+        buildNowPlaying(unit, zone, zoneState, unit.playInfo),
+      );
+      musicCount += count;
       const playing = nowPlaying(unit, zoneState, unit.playInfo);
       const widgetKey = JSON.stringify([
         zoneState.power,
@@ -491,8 +495,8 @@ export class Hub {
       }
     }
     const { count } = await this.gladys.publishChangedStates(states, { heartbeat: HEARTBEAT_MS });
-    if (count > 0) {
-      logger.debug(`${unit.name}: ${count} state(s) published`);
+    if (count + musicCount > 0) {
+      logger.debug(`${unit.name}: ${count + musicCount} state(s) published`);
     }
     await this.detectTrack(unit, zones);
     if (widgetChanged) {
@@ -536,7 +540,7 @@ export class Hub {
   // --- Commands --------------------------------------------------------------
 
   /** Run a command on a zone, turning the device's refusals into readable errors. */
-  async command(unit, zone, description, run) {
+  async command(unit, zone, description, run, refusal = MESSAGES.refused) {
     const language = this.config.language;
     try {
       await run();
@@ -546,7 +550,7 @@ export class Hub {
       }
       if (err instanceof YxcError) {
         logger.warn(`${zoneDeviceName(unit, zone)}: ${description} refused (${err.message})`);
-        throw new UserError(MESSAGES.refused, language);
+        throw new UserError(refusal, language);
       }
       throw err;
     }
@@ -588,6 +592,19 @@ export class Hub {
       }
       case FEATURES.PRESET:
         return this.recallPreset(device.external_id, Number(value));
+      case FEATURES.PLAYBACK_STATE: {
+        const playback = PLAYBACK_STATE_COMMANDS[Number(value)];
+        if (!playback) {
+          throw new Error(`Playback state ${value} cannot be set`);
+        }
+        return this.playback(device.external_id, playback);
+      }
+      case FEATURES.POSITION:
+        return this.seek(device.external_id, Number(value));
+      case FEATURES.SHUFFLE:
+        return this.setShuffle(device.external_id, Boolean(Number(value)));
+      case FEATURES.REPEAT:
+        return this.setRepeat(device.external_id, Number(value));
       default:
         if (PLAYBACK_COMMANDS[key]) {
           return this.playback(device.external_id, PLAYBACK_COMMANDS[key]);
@@ -602,14 +619,7 @@ export class Hub {
    * zone on the tuner would otherwise pause another one's music.
    */
   async playback(deviceExternalId, playback) {
-    const { unit, zone } = this.requireZone(deviceExternalId);
-    if (!unit.zoneStates) {
-      await this.refresh(unit, { force: true }).catch(() => {});
-    }
-    const zoneState = unit.zoneStates?.get(zone.id);
-    if (!unit.hasNetusb || !zoneState || !isNetworkSource(unit, zoneState.input)) {
-      throw new UserError(MESSAGES.notNetworkSource, this.config.language);
-    }
+    const { unit, zone } = await this.listeningZone(deviceExternalId);
     return this.command(unit, zone, playback, async () => {
       try {
         await unit.client.setPlayback(playback);
@@ -622,6 +632,108 @@ export class Hub {
         throw err;
       }
     });
+  }
+
+  /**
+   * The zone of a device external_id, when it listens to a network source:
+   * the network module is shared by all the zones, a zone on the tuner would
+   * otherwise pause another one's music.
+   */
+  async listeningZone(deviceExternalId) {
+    const found = this.requireZone(deviceExternalId);
+    const { unit, zone } = found;
+    if (!unit.zoneStates) {
+      await this.refresh(unit, { force: true }).catch(() => {});
+    }
+    const zoneState = unit.zoneStates?.get(zone.id);
+    if (!unit.hasNetusb || !zoneState || !isNetworkSource(unit, zoneState.input)) {
+      throw new UserError(MESSAGES.notNetworkSource, this.config.language);
+    }
+    return found;
+  }
+
+  /** Jump within the track: the media server input only (YXC Advanced). */
+  async seek(deviceExternalId, position) {
+    const { unit, zone } = await this.listeningZone(deviceExternalId);
+    const seconds = Math.max(0, Math.round(Number(position) || 0));
+    await this.command(
+      unit,
+      zone,
+      `position ${seconds} s`,
+      () => unit.client.setPlayPosition(seconds),
+      MESSAGES.noSeek,
+    );
+  }
+
+  /** Shuffle on or off; `setShuffle` from API 1.19, a toggle before. */
+  async setShuffle(deviceExternalId, enable) {
+    const { unit, zone } = await this.listeningZone(deviceExternalId);
+    const available = unit.playInfo?.shuffleAvailable ?? null;
+    // "on" on most sources, "songs" / "albums" on some (the device's own list).
+    const mode = enable
+      ? (['on', 'songs', 'albums'].find((m) => available === null || available.includes(m)) ?? null)
+      : 'off';
+    if (mode === null || (available !== null && !available.includes(mode))) {
+      throw new UserError(MESSAGES.noMode, this.config.language);
+    }
+    await this.command(
+      unit,
+      zone,
+      `shuffle ${mode}`,
+      () =>
+        this.setMode(unit, 'shuffle', mode, (info) => (info.shuffle === 'off') !== enable, {
+          set: () => unit.client.setShuffle(mode),
+          toggle: () => unit.client.toggleShuffle(),
+        }),
+      MESSAGES.noMode,
+    );
+  }
+
+  /** Repeat off / all / one (MUSIC_REPEAT_MODE); `setRepeat` from API 1.19, a toggle before. */
+  async setRepeat(deviceExternalId, value) {
+    const { unit, zone } = await this.listeningZone(deviceExternalId);
+    const mode = Object.keys(REPEAT_MODES).find((key) => REPEAT_MODES[key] === value);
+    if (!mode) {
+      throw new Error(`Repeat mode ${value} cannot be set`);
+    }
+    const available = unit.playInfo?.repeatAvailable ?? null;
+    if (available !== null && !available.includes(mode)) {
+      throw new UserError(MESSAGES.noMode, this.config.language);
+    }
+    await this.command(
+      unit,
+      zone,
+      `repeat ${mode}`,
+      () =>
+        this.setMode(unit, 'repeat', mode, (info) => info.repeat === mode, {
+          set: () => unit.client.setRepeat(mode),
+          toggle: () => unit.client.toggleRepeat(),
+        }),
+      MESSAGES.noMode,
+    );
+  }
+
+  /**
+   * Set a shuffle or repeat mode. Before API 1.19 the device only toggles
+   * (off → on for shuffle, off → one → all for repeat, depending on the
+   * source): toggle and read back until the mode is reached, three times at
+   * most.
+   */
+  async setMode(unit, name, mode, reached, { set, toggle }) {
+    if (unit.apiVersion === null || unit.apiVersion >= 1.19) {
+      await set();
+      return;
+    }
+    for (let i = 0; i < 3; i += 1) {
+      const info = playInfoOf(await unit.client.playInfo());
+      if (reached(info)) {
+        return;
+      }
+      await toggle();
+    }
+    if (!reached(playInfoOf(await unit.client.playInfo()))) {
+      throw new YxcError(4, `netusb/${name === 'shuffle' ? 'toggleShuffle' : 'toggleRepeat'}`);
+    }
   }
 
   /** Switch a zone to an input, by id (`hdmi1`) or by the name the device shows. */
